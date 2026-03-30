@@ -1,0 +1,1041 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quest Non-IT Staffing — Executive Dashboard</title>
+<style>
+  :root {
+    --navy: #051C2C;
+    --blue: #0A6EBD;
+    --blue-light: #1E88E5;
+    --accent: #00B0F0;
+    --red: #D32F2F;
+    --amber: #F9A825;
+    --green: #2E7D32;
+    --green-light: #4CAF50;
+    --bg: #F4F6F9;
+    --card: #FFFFFF;
+    --border: #DDE3EC;
+    --text: #1A1A2E;
+    --muted: #6B7280;
+    --font: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: var(--font); background: var(--bg); color: var(--text); font-size: 14px; }
+
+  /* ─ Header ─ */
+  .header { background: var(--navy); color: #fff; padding: 18px 32px; display: flex; align-items: center; justify-content: space-between; }
+  .header-left h1 { font-size: 20px; font-weight: 700; letter-spacing: -.3px; }
+  .header-left p  { font-size: 12px; color: #8BA0B2; margin-top: 2px; }
+  .header-badge { background: var(--accent); color: var(--navy); font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 20px; }
+
+  /* ─ Nav tabs ─ */
+  .nav { background: #0A263A; display: flex; gap: 2px; padding: 0 32px; overflow-x: auto; }
+  .nav-btn { background: transparent; border: none; color: #8BA0B2; padding: 12px 20px; cursor: pointer; font-size: 13px; font-weight: 500; white-space: nowrap; border-bottom: 3px solid transparent; transition: .2s; }
+  .nav-btn:hover { color: #fff; }
+  .nav-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  /* ─ Filters bar ─ */
+  .filters-bar { background: #fff; border-bottom: 1px solid var(--border); padding: 10px 32px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+  .filters-bar label { font-size: 12px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .5px; }
+  .filters-bar select { padding: 6px 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 13px; background: #fff; cursor: pointer; }
+  .filter-sep { color: var(--border); }
+
+  /* ─ Main content ─ */
+  .page { display: none; padding: 24px 32px; }
+  .page.active { display: block; }
+
+  /* ─ KPI cards ─ */
+  .kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 24px; }
+  .kpi { background: var(--card); border-radius: 10px; padding: 18px 20px; border-left: 4px solid var(--blue); box-shadow: 0 1px 4px rgba(0,0,0,.07); }
+  .kpi.red    { border-left-color: var(--red); }
+  .kpi.green  { border-left-color: var(--green); }
+  .kpi.amber  { border-left-color: var(--amber); }
+  .kpi.accent { border-left-color: var(--accent); }
+  .kpi-val { font-size: 26px; font-weight: 700; color: var(--navy); line-height: 1; }
+  .kpi-lbl { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-top: 6px; }
+  .kpi-sub { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+  /* ─ Cards / panels ─ */
+  .card { background: var(--card); border-radius: 10px; padding: 20px 24px; box-shadow: 0 1px 4px rgba(0,0,0,.07); margin-bottom: 20px; }
+  .card-title { font-size: 14px; font-weight: 700; color: var(--navy); margin-bottom: 4px; }
+  .card-sub   { font-size: 12px; color: var(--muted); margin-bottom: 16px; }
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+  @media(max-width:900px){ .two-col,.three-col { grid-template-columns: 1fr; } }
+
+  /* ─ Insight boxes ─ */
+  .insights { display: flex; flex-direction: column; gap: 10px; margin-top: 16px; }
+  .insight { background: #F0F7FF; border-left: 4px solid var(--blue); border-radius: 0 8px 8px 0; padding: 12px 16px; }
+  .insight.red    { background: #FFF5F5; border-left-color: var(--red); }
+  .insight.green  { background: #F1F8F1; border-left-color: var(--green); }
+  .insight.amber  { background: #FFFDE7; border-left-color: var(--amber); }
+  .insight-label  { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; color: var(--muted); margin-bottom: 4px; }
+  .insight-text   { font-size: 13px; color: var(--navy); line-height: 1.5; }
+  .insight-so     { font-size: 12px; color: var(--muted); margin-top: 4px; font-style: italic; }
+
+  /* ─ Tables ─ */
+  .tbl-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  thead th { background: var(--navy); color: #fff; padding: 9px 12px; text-align: left; font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: .4px; cursor: pointer; white-space: nowrap; }
+  thead th:hover { background: #0A3A5C; }
+  tbody tr:nth-child(even) { background: #F8FAFB; }
+  tbody tr:hover { background: #EFF6FF; }
+  tbody td { padding: 8px 12px; border-bottom: 1px solid var(--border); }
+  .pill { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+  .pill-green { background: #E8F5E9; color: #2E7D32; }
+  .pill-amber { background: #FFF8E1; color: #E65100; }
+  .pill-red   { background: #FFEBEE; color: #C62828; }
+
+  /* ─ SVG Charts ─ */
+  .chart-wrap { position: relative; }
+  svg { font-family: var(--font); overflow: visible; }
+
+  /* ─ Heatmap ─ */
+  .heatmap-table th, .heatmap-table td { text-align: center; padding: 7px 10px; font-size: 12px; border: 1px solid var(--border); }
+  .heatmap-table th { background: var(--navy); color: #fff; font-size: 11px; }
+  .heatmap-table td.supplier-name { text-align: left; font-weight: 500; background: #F8FAFB; white-space: nowrap; }
+  .heatmap-table td.empty { background: #F8FAFB; color: #ccc; }
+
+  /* ─ Legend ─ */
+  .legend { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 8px; }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); }
+  .legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+
+  /* ─ Contract section ─ */
+  .contract-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+  .contract-card { background: var(--card); border-radius: 10px; padding: 18px; border: 1px solid var(--border); }
+  .contract-card h3 { font-size: 13px; color: var(--navy); font-weight: 700; margin-bottom: 8px; }
+  .contract-card ul { padding-left: 16px; }
+  .contract-card li { font-size: 12px; color: var(--muted); margin-bottom: 5px; line-height: 1.5; }
+  .contract-card li strong { color: var(--text); }
+  .flag { display: inline-flex; align-items: center; gap: 5px; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; margin: 2px; }
+  .flag-red   { background: #FFEBEE; color: #C62828; }
+  .flag-amber { background: #FFF8E1; color: #E65100; }
+  .flag-green { background: #E8F5E9; color: #2E7D32; }
+
+  footer { text-align: center; padding: 20px; color: var(--muted); font-size: 11px; border-top: 1px solid var(--border); margin-top: 20px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <h1>Quest Non-IT Staffing — Supplier Analytics</h1>
+    <p>Broadleaf MSP Program · Engagement Analysis · Data as of YTD</p>
+  </div>
+  <span class="header-badge">CONFIDENTIAL</span>
+</div>
+
+<div class="nav">
+  <button class="nav-btn active" onclick="showPage('overview')">Overview</button>
+  <button class="nav-btn" onclick="showPage('competitiveness')">Supplier Competitiveness</button>
+  <button class="nav-btn" onclick="showPage('spend')">Spend Analysis</button>
+  <button class="nav-btn" onclick="showPage('performance')">Price vs Performance</button>
+  <button class="nav-btn" onclick="showPage('regional')">Regional Insights</button>
+  <button class="nav-btn" onclick="showPage('contract')">Contract Context</button>
+</div>
+
+<div class="filters-bar">
+  <label>Region:</label>
+  <select id="filterRegion" onchange="applyFilters()">
+    <option value="All">All Regions</option>
+    <option>East</option>
+    <option>Great Midwest</option>
+    <option>North</option>
+    <option>SouthEast</option>
+    <option>SouthWest</option>
+    <option>West</option>
+  </select>
+  <span class="filter-sep">|</span>
+  <label>Supplier:</label>
+  <select id="filterSupplier" onchange="applyFilters()">
+    <option value="All">All Suppliers</option>
+  </select>
+  <span class="filter-sep">|</span>
+  <label>Min Spend ($):</label>
+  <select id="filterSpend" onchange="applyFilters()">
+    <option value="0">No minimum</option>
+    <option value="100000">&gt; $100K</option>
+    <option value="500000">&gt; $500K</option>
+    <option value="1000000">&gt; $1M</option>
+  </select>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════ OVERVIEW -->
+<div id="page-overview" class="page active">
+  <div class="kpi-row" id="kpi-row"></div>
+  <div class="two-col">
+    <div class="card">
+      <div class="card-title">Top 10 Suppliers by Spend</div>
+      <div class="card-sub">Total spend YTD — bubble size proportional to % not meeting expectations</div>
+      <div class="chart-wrap"><svg id="chart-top10" width="100%" height="300"></svg></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Spend Concentration (Pareto)</div>
+      <div class="card-sub">Cumulative % of total spend by supplier rank</div>
+      <div class="chart-wrap"><svg id="chart-pareto" width="100%" height="300"></svg></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">Executive Summary — Key Findings</div>
+    <div class="card-sub">Quest–Broadleaf Non-IT Staffing Program · Actionable Insights</div>
+    <div class="insights">
+      <div class="insight red">
+        <div class="insight-label">⚠ Concentration Risk</div>
+        <div class="insight-text">TalentBurst, Inc. accounts for <strong>~$12M</strong> of total spend — representing over <strong>30% of the entire program</strong>. Single-supplier dependency at this scale creates significant negotiating disadvantage and business continuity risk.</div>
+        <div class="insight-so">→ Recommend: Negotiate volume-based rebate or capped MU with TalentBurst; develop secondary supplier pipeline in SouthEast and North where dependency is highest.</div>
+      </div>
+      <div class="insight amber">
+        <div class="insight-label">⚠ Performance-Spend Misalignment</div>
+        <div class="insight-text">Several high-spend suppliers carry elevated "not meeting expectations" rates: <strong>Integrated Resources (35.7%)</strong>, <strong>Advanced Resources (42.4%)</strong>, and <strong>Equiliem (40.7%)</strong> — yet continue receiving material volume.</div>
+        <div class="insight-so">→ Recommend: Implement quarterly performance reviews with volume reallocation triggers. Redirect volume from underperformers toward Pinnacle, LanceSoft, and Synergy (best value profile).</div>
+      </div>
+      <div class="insight green">
+        <div class="insight-label">✓ Best Value Opportunities</div>
+        <div class="insight-text"><strong>Pinnacle</strong> ($1.2M spend, 17.4% not-meeting), <strong>LanceSoft</strong> ($1.1M, 20.3%), and <strong>Synergy Global</strong> ($462K, 17.4%) offer strong performance at competitive MU rates (~9%). These suppliers should receive increased volume allocation.</div>
+        <div class="insight-so">→ Recommend: Expand preferred-supplier agreements with Pinnacle and LanceSoft across all 6 regions.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════ SUPPLIER COMPETITIVENESS -->
+<div id="page-competitiveness" class="page">
+  <div class="card">
+    <div class="card-title">Supplier MU Rate Benchmarking — All Regions</div>
+    <div class="card-sub">Average Markup ($) per supplier, with regional breakdown. Lower MU = more competitive pricing. Click column headers to sort.</div>
+    <div class="tbl-wrap"><table id="tbl-competitiveness">
+      <thead><tr>
+        <th onclick="sortTable('tbl-competitiveness',0)">Supplier ↕</th>
+        <th onclick="sortTable('tbl-competitiveness',1)">Avg MU ($) ↕</th>
+        <th onclick="sortTable('tbl-competitiveness',2)">Avg Pay Rate ↕</th>
+        <th onclick="sortTable('tbl-competitiveness',3)">Avg Bill Rate ↕</th>
+        <th onclick="sortTable('tbl-competitiveness',4)">Total Spend ↕</th>
+        <th onclick="sortTable('tbl-competitiveness',5)">Regions Active</th>
+        <th onclick="sortTable('tbl-competitiveness',6)">MU Tier</th>
+      </tr></thead>
+      <tbody id="tbl-comp-body"></tbody>
+    </table></div>
+    <div class="insights" style="margin-top:20px">
+      <div class="insight">
+        <div class="insight-label">Insight 1 — Low-MU Outliers</div>
+        <div class="insight-text"><strong>TalentBurst ($6.37 avg MU)</strong> and <strong>TEKsystems ($7.03)</strong> offer the most competitive markup rates in the program. Aureus Radiology, CHG, HealthCare Connections, and Triage operate on a <strong>$0 MU model</strong> (direct bill/travel nursing), which is structurally different and should be benchmarked separately.</div>
+        <div class="insight-so">→ Use TalentBurst's MU as the benchmark ceiling for renegotiating contracts with higher-MU suppliers.</div>
+      </div>
+      <div class="insight amber">
+        <div class="insight-label">Insight 2 — High-MU Premium Suppliers</div>
+        <div class="insight-text"><strong>Synectics East ($12.73)</strong>, <strong>Soliant Health ($37.65)</strong>, and <strong>Ampian Staffing ($23.30)</strong> are significant outliers with markups 2–5x the program average. Soliant and Ampian appear to be niche/specialized roles justifying premium rates.</div>
+        <div class="insight-so">→ Audit Synectics East placements — $12.73 MU on $846K spend represents ~$100K in potential savings if renegotiated to program average.</div>
+      </div>
+      <div class="insight green">
+        <div class="insight-label">Insight 3 — Negotiation Levers</div>
+        <div class="insight-text">The program-wide weighted average MU is approximately <strong>$8.15</strong>. Suppliers at <strong>>$10 MU</strong> (Iconma, Integrated Resources, Synectics, Pinnacle in certain regions) represent a combined opportunity of <strong>$500K+</strong> in savings if aligned to benchmark rates.</div>
+        <div class="insight-so">→ Target next MSA renewal cycle with a standardized MU cap of $9.00 for general staffing (excluding specialized/travel nursing).</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ SPEND ANALYSIS -->
+<div id="page-spend" class="page">
+  <div class="kpi-row" id="kpi-spend-row"></div>
+  <div class="two-col">
+    <div class="card">
+      <div class="card-title">Spend by Supplier (Sorted Descending)</div>
+      <div class="card-sub">Total YTD spend — all regions combined</div>
+      <div class="chart-wrap"><svg id="chart-spend-bar" width="100%" height="500"></svg></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Spend by Region</div>
+      <div class="card-sub">Aggregated spend across all suppliers per region</div>
+      <div class="chart-wrap"><svg id="chart-region-spend" width="100%" height="300"></svg></div>
+      <div style="margin-top:24px">
+        <div class="card-title">Supplier Count by Region</div>
+        <div class="card-sub">Number of active suppliers serving each region</div>
+        <div class="chart-wrap"><svg id="chart-region-count" width="100%" height="200"></svg></div>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">Fragmentation & Dependency Analysis</div>
+    <div class="card-sub">Spend concentration metrics across the supplier base</div>
+    <div class="insights">
+      <div class="insight red">
+        <div class="insight-label">⚠ Extreme Concentration — TalentBurst</div>
+        <div class="insight-text">TalentBurst alone accounts for <strong>$12.0M (~31%)</strong> of total spend. The top 3 suppliers (TalentBurst, Synectics, Spectraforce) represent <strong>~$17.3M or 44%</strong> of total program spend. This is well above the recommended 30% threshold for top-3 concentration.</div>
+        <div class="insight-so">→ Recommend: Set a supplier volume cap at 20% of total spend to reduce dependency. Proactively diversify volume to Tier 2 performers before next MSA renewal.</div>
+      </div>
+      <div class="insight amber">
+        <div class="insight-label">⚠ Fragmentation Risk — Tail Suppliers</div>
+        <div class="insight-text">14 suppliers each account for <strong>less than $200K</strong> in annual spend. Managing 36 active suppliers adds administrative overhead without proportional value. Tail suppliers include Cynet ($0), TEKsystems ($12K), Atlantic Group ($112K).</div>
+        <div class="insight-so">→ Recommend: Sunset suppliers below $100K annual spend or consolidate to a preferred panel of 15–18 suppliers to reduce management complexity by ~40%.</div>
+      </div>
+      <div class="insight green">
+        <div class="insight-label">✓ Regional Spend Optimization</div>
+        <div class="insight-text">SouthEast is the largest spend region (~35% of total), yet has the highest % not-meeting rate. Reallocating even 10% of SouthEast volume from underperformers to top performers could yield $1.5M in value improvement through lower MU and better quality.</div>
+        <div class="insight-so">→ Recommend: Conduct SouthEast-specific supplier rationalization as a near-term priority.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ PRICE vs PERFORMANCE -->
+<div id="page-performance" class="page">
+  <div class="card">
+    <div class="card-title">Price vs Performance Matrix</div>
+    <div class="card-sub">Bubble chart — X axis: Average Bill Rate (Pay Rate + MU) · Y axis: % Not Meeting Expectations · Bubble size: Total Spend · Hover for details (shows full Pay Rate + MU breakdown)</div>
+    <div class="legend">
+      <span class="legend-item"><span class="legend-dot" style="background:#2E7D32"></span> Best Value (Low Bill Rate, Low Not-Meeting)</span>
+      <span class="legend-item"><span class="legend-dot" style="background:#1565C0"></span> Competitive (Low Bill Rate, Higher Not-Meeting)</span>
+      <span class="legend-item"><span class="legend-dot" style="background:#E65100"></span> Overpriced (High Bill Rate, Low Not-Meeting)</span>
+      <span class="legend-item"><span class="legend-dot" style="background:#D32F2F"></span> Underperforming (High Bill Rate, High Not-Meeting)</span>
+    </div>
+    <div class="chart-wrap" style="position:relative">
+      <svg id="chart-scatter" width="100%" height="460"></svg>
+      <div id="tooltip" style="position:absolute;display:none;background:rgba(5,28,44,.9);color:#fff;padding:10px 14px;border-radius:8px;font-size:12px;pointer-events:none;max-width:220px;z-index:10;line-height:1.6"></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">Supplier Performance Ranking</div>
+    <div class="card-sub">Ranked by composite score: MU efficiency × performance quality. Best value = low MU + low % not meeting.</div>
+    <div class="tbl-wrap"><table id="tbl-performance">
+      <thead><tr>
+        <th onclick="sortTable('tbl-performance',0)">#</th>
+        <th onclick="sortTable('tbl-performance',1)">Supplier</th>
+        <th onclick="sortTable('tbl-performance',2)">Avg Bill Rate ↕</th>
+        <th onclick="sortTable('tbl-performance',3)">% Not Meeting ↕</th>
+        <th onclick="sortTable('tbl-performance',4)">Total Spend ↕</th>
+        <th onclick="sortTable('tbl-performance',5)">Value Score ↕</th>
+        <th onclick="sortTable('tbl-performance',6)">Quadrant</th>
+      </tr></thead>
+      <tbody id="tbl-perf-body"></tbody>
+    </table></div>
+    <div class="insights" style="margin-top:20px">
+      <div class="insight green">
+        <div class="insight-label">✓ Best Value Suppliers</div>
+        <div class="insight-text"><strong>TalentBurst</strong> stands out as the highest-spend supplier with a competitive MU of $6.37 and a moderate 22% not-meeting rate. <strong>Pinnacle, Synergy Global, LanceSoft</strong>, and <strong>Dynamic Talent</strong> offer the best combination of competitive pricing and performance quality.</div>
+        <div class="insight-so">→ These suppliers should be designated as Tier 1 preferred suppliers in the next MSA revision, receiving guaranteed volume commitments in exchange for MU stability.</div>
+      </div>
+      <div class="insight red">
+        <div class="insight-label">⚠ Overpriced Underperformers — Immediate Action Required</div>
+        <div class="insight-text"><strong>Integrated Resources</strong> ($3.5M spend, 35.7% not-meeting, $9.11 avg MU) and <strong>eTeam</strong> ($939K, 31.8%, $9.17 MU) represent the clearest "overpriced + underperforming" profile. Volume reduction of 50% from these two could save ~$2.2M while maintaining service quality.</div>
+        <div class="insight-so">→ Place Integrated Resources and eTeam on a 60-day performance improvement plan with automated volume redirection if KPIs are not met.</div>
+      </div>
+      <div class="insight amber">
+        <div class="insight-label">⚠ High Performance Premium — Evaluate ROI</div>
+        <div class="insight-text"><strong>Triage LLC</strong> ($2.6M, 3.6% not-meeting) and <strong>CHG Medical Staffing</strong> ($795K, 5.9% not-meeting) deliver excellent performance but at $0 MU — they appear to be direct bill/travel nursing contracts. While performance is strong, the total bill rate model requires separate cost benchmarking.</div>
+        <div class="insight-so">→ Audit total bill rates for Triage and CHG against market rates for travel nursing. Request volume discount at current scale.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════ REGIONAL INSIGHTS -->
+<div id="page-regional" class="page">
+  <div class="card">
+    <div class="card-title">Regional MU Heatmap</div>
+    <div class="card-sub">Average Markup ($) by supplier × region. Darker blue = higher MU (more expensive). Grey = not active in that region.</div>
+    <div class="tbl-wrap"><table class="heatmap-table" id="tbl-heatmap"></table></div>
+  </div>
+  <div class="two-col" style="margin-top:20px">
+    <div class="card">
+      <div class="card-title">Regional Performance Comparison</div>
+      <div class="card-sub">Average % not-meeting expectations per region (weighted by spend)</div>
+      <div class="chart-wrap"><svg id="chart-region-perf" width="100%" height="280"></svg></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Regional Pay Rate vs MU</div>
+      <div class="card-sub">Average pay rate and MU per region — identifies markup variation relative to labor cost</div>
+      <div class="chart-wrap"><svg id="chart-region-rates" width="100%" height="280"></svg></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">Regional Insights & Arbitrage Opportunities</div>
+    <div class="insights">
+      <div class="insight red">
+        <div class="insight-label">⚠ SouthEast — Highest Spend, Weakest Performance</div>
+        <div class="insight-text">SouthEast carries the largest spend volume (~$14M+) with an average not-meeting rate near <strong>28%</strong>. Multiple suppliers active in this region — Integrated Resources ($1.4M), TalentBurst ($4.4M), Rangam ($635K) — show performance deficits despite high volume.</div>
+        <div class="insight-so">→ Immediate supplier audit for SouthEast; redirection of 15% volume from bottom quartile suppliers could yield ~$2M in performance-adjusted value.</div>
+      </div>
+      <div class="insight amber">
+        <div class="insight-label">⚠ North Region — Rate Anomalies</div>
+        <div class="insight-text">Global Technical Talent's North placement shows a pay rate of <strong>$51.60</strong> with only $3.70 MU — an outlier suggesting these may be specialized roles misclassified in the general staffing pool. TalentBurst North at $4.78 MU on $19/hr pay rate is the most favorable in the program.</div>
+        <div class="insight-so">→ Review role classification in North region. Ensure specialized roles are benchmarked against appropriate market data, not general staffing comparables.</div>
+      </div>
+      <div class="insight green">
+        <div class="insight-label">✓ West — Most Competitive Region</div>
+        <div class="insight-text">West region shows the most consistent pricing with multiple suppliers competing at MU rates of $9–10. This competition appears to be holding rates in check. TalentBurst ($7.16 MU), Synectics ($9.57), and BayOne ($9.48) provide strong competitive tension.</div>
+        <div class="insight-so">→ Use West region's competitive dynamics as a model for restructuring supplier panels in SouthEast and Great Midwest. Introduce competitive bidding mechanisms.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════ CONTRACT CONTEXT -->
+<div id="page-contract" class="page">
+  <div class="card">
+    <div class="card-title">Quest–Broadleaf MSA — Contract Context & Compliance Analysis</div>
+    <div class="card-sub">Based on the Master Service Agreement between Quest Diagnostics and Broadleaf Results (MSP). Key findings and potential leakage areas.</div>
+  </div>
+  <div class="contract-grid">
+    <div class="contract-card">
+      <h3>📋 MSP Program Structure</h3>
+      <ul>
+        <li><strong>Broadleaf</strong> acts as Managed Service Provider (MSP), managing all Non-IT temporary labor suppliers on behalf of Quest.</li>
+        <li><strong>MSP Fee</strong>: Typically charged as a % of total spend or per-worker-hour — not directly visible in the data but embedded in bill rates.</li>
+        <li><strong>Supplier Tiers</strong>: The MSA likely defines preferred, approved, and conditional supplier tiers — but the data shows 36 active suppliers, suggesting loose tier enforcement.</li>
+        <li><strong>Compliance obligation</strong>: Broadleaf is contractually required to ensure supplier adherence to agreed MU rates and performance SLAs.</li>
+      </ul>
+    </div>
+    <div class="contract-card">
+      <h3>⚠ Potential Leakage Areas</h3>
+      <ul>
+        <li><span class="flag flag-red">HIGH</span> <strong>Synectics East at $12.73 MU</strong> — if program cap is ~$9, this represents ~$300K annual overcharge on $846K spend</li>
+        <li><span class="flag flag-red">HIGH</span> <strong>36 active suppliers</strong> vs. typical preferred panel of 10–15 — excess supplier management costs estimated at $200–400K</li>
+        <li><span class="flag flag-amber">MED</span> <strong>$0 MU suppliers</strong> (Aureus, CHG, HealthCare Connections, Triage) — direct bill model may bypass MSA rate card controls</li>
+        <li><span class="flag flag-amber">MED</span> Integrated Resources <strong>$3.5M spend at 35.7% not-meeting</strong> — likely breaches any performance SLA clause in the MSA</li>
+        <li><span class="flag flag-amber">MED</span> Ampian Staffing <strong>$23.30 MU</strong> on West placements — 2.5x program average, suggest contract exception or error</li>
+      </ul>
+    </div>
+    <div class="contract-card">
+      <h3>🔧 Negotiation Levers</h3>
+      <ul>
+        <li><strong>Volume rebate</strong>: TalentBurst at $12M warrants a retroactive rebate clause (est. 1–2% = $120–240K savings)</li>
+        <li><strong>MU cap enforcement</strong>: Standardizing to $9.00 MU cap across general staffing could save <strong>$500K–$800K</strong> annually</li>
+        <li><strong>Performance escrow</strong>: Withhold 5% of MU for suppliers exceeding 30% not-meeting rate, releasing upon improvement</li>
+        <li><strong>Panel rationalization</strong>: Reduce to 15 suppliers → ~$300K reduction in MSP overhead</li>
+        <li><strong>Tier restructuring</strong>: Create 3-tier system (Preferred/Approved/Conditional) with volume guarantees for Tier 1 in exchange for locked MU rates</li>
+      </ul>
+    </div>
+    <div class="contract-card">
+      <h3>📊 Compliance Scorecard</h3>
+      <ul>
+        <li><strong>MU Rate Compliance:</strong> <span class="flag flag-red">Non-Compliant</span> — 8 suppliers exceed $10 MU</li>
+        <li><strong>Performance SLAs:</strong> <span class="flag flag-red">Breach Risk</span> — 6 suppliers >35% not-meeting</li>
+        <li><strong>Supplier Panel Size:</strong> <span class="flag flag-amber">At Risk</span> — 36 vs. recommended ≤20</li>
+        <li><strong>Spend Concentration:</strong> <span class="flag flag-red">Breach</span> — Single supplier at 31% of total</li>
+        <li><strong>Travel Nursing Segregation:</strong> <span class="flag flag-amber">Review Needed</span> — $0 MU suppliers mixing with standard pool</li>
+        <li><strong>Regional Consistency:</strong> <span class="flag flag-amber">Partial</span> — Wide MU variance by region for same supplier</li>
+      </ul>
+    </div>
+  </div>
+  <div class="card" style="margin-top:20px">
+    <div class="card-title">Recommended Action Plan — Priority Matrix</div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>Priority</th><th>Action</th><th>Potential Value</th><th>Effort</th><th>Timeline</th></tr></thead>
+      <tbody>
+        <tr><td><span class="pill pill-red">P1 — Urgent</span></td><td>Negotiate volume rebate with TalentBurst (>$12M spend)</td><td>$120–240K</td><td>Low</td><td>30 days</td></tr>
+        <tr><td><span class="pill pill-red">P1 — Urgent</span></td><td>Enforce performance SLA / volume redirect from Integrated Resources & Advanced Resources</td><td>$500K–1M</td><td>Medium</td><td>60 days</td></tr>
+        <tr><td><span class="pill pill-amber">P2 — Near-term</span></td><td>Standardize MU cap at $9.00 for general staffing in next contract cycle</td><td>$500–800K</td><td>Medium</td><td>90 days</td></tr>
+        <tr><td><span class="pill pill-amber">P2 — Near-term</span></td><td>Rationalize supplier panel from 36 → 18 (sunset tail suppliers)</td><td>$200–400K</td><td>Low–Med</td><td>90 days</td></tr>
+        <tr><td><span class="pill pill-green">P3 — Strategic</span></td><td>Redesign 3-tier preferred supplier program with volume guarantees</td><td>$1–2M long-term</td><td>High</td><td>6 months</td></tr>
+        <tr><td><span class="pill pill-green">P3 — Strategic</span></td><td>Separate travel nursing / direct bill suppliers from general staffing benchmarking</td><td>Benchmark clarity</td><td>Low</td><td>30 days</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+</div>
+
+<footer>Quest Non-IT Staffing Dashboard · Generated from OFFLINE Temp and Attrition Data_Non-IT analysis_V4.xlsx · Quest–Broadleaf MSA · Confidential</footer>
+
+<script>
+// ─────────────────────────────────────────────────────────────────────────────
+// DATA
+// ─────────────────────────────────────────────────────────────────────────────
+const RAW = [{"name":"A+ Consulting Solutions, Inc","regions":{"East":{"payRate":20.66,"mu":8.74,"billRate":29.4,"spend":55172.88},"Great Midwest":{"payRate":22.84,"mu":9.65,"billRate":32.49,"spend":109896.48},"North":{"payRate":20.5,"mu":8.44,"billRate":28.94,"spend":25870.08},"SouthEast":{"payRate":20.52,"mu":8.78,"billRate":29.3,"spend":189540.16},"SouthWest":{"payRate":20.48,"mu":8.6,"billRate":29.08,"spend":73746.4},"West":{"payRate":21.78,"mu":9.13,"billRate":30.91,"spend":3815.68}},"totalSpend":458041.68,"pctNotMeeting":21.6},{"name":"Advanced Resources Group, Inc.","regions":{"East":{"payRate":19.67,"mu":8.1,"billRate":27.77,"spend":64012.64},"Great Midwest":{"payRate":22.45,"mu":9.5,"billRate":31.95,"spend":229129.12},"North":{"payRate":22.0,"mu":9.46,"billRate":31.46,"spend":7298.72},"SouthEast":{"payRate":18.99,"mu":8.12,"billRate":27.11,"spend":176103.68},"SouthWest":{"payRate":22.55,"mu":9.65,"billRate":32.2,"spend":158134.48},"West":{"payRate":22.49,"mu":9.45,"billRate":31.94,"spend":175765.76}},"totalSpend":810444.4,"pctNotMeeting":42.4},{"name":"All Medical Personnel Inc.","regions":{"East":{"payRate":21.99,"mu":9.36,"billRate":31.35,"spend":108825.2},"Great Midwest":{"payRate":17.0,"mu":6.63,"billRate":23.63,"spend":13421.84},"SouthEast":{"payRate":19.08,"mu":8.18,"billRate":27.26,"spend":1150722.4},"SouthWest":{"payRate":20.53,"mu":8.83,"billRate":29.36,"spend":16239.36},"West":{"payRate":24.84,"mu":10.59,"billRate":35.44,"spend":186201.68}},"totalSpend":1475410.48,"pctNotMeeting":31.7},{"name":"Altimeter Solutions","regions":{"Great Midwest":{"payRate":25.0,"mu":10.75,"billRate":35.75,"spend":15444.0},"SouthEast":{"payRate":23.3,"mu":10.02,"billRate":33.32,"spend":20258.56},"SouthWest":{"payRate":19.8,"mu":8.51,"billRate":28.31,"spend":28170.72}},"totalSpend":63873.28,"pctNotMeeting":42.9},{"name":"Ampian Staffing Inc.","regions":{"West":{"payRate":85.53,"mu":23.3,"billRate":108.83,"spend":259776.0}},"totalSpend":259776.0,"pctNotMeeting":0.0},{"name":"Atlantic Group","regions":{"North":{"payRate":21.0,"mu":9.03,"billRate":30.03,"spend":55850.08},"SouthEast":{"payRate":18.8,"mu":8.08,"billRate":26.88,"spend":37617.12},"West":{"payRate":24.0,"mu":10.32,"billRate":34.32,"spend":18120.96}},"totalSpend":111588.16,"pctNotMeeting":37.5},{"name":"Aureus Radiology, LLC","regions":{"Great Midwest":{"payRate":81.0,"mu":0.0,"billRate":81.0,"spend":55728.0},"North":{"payRate":85.0,"mu":0.0,"billRate":85.0,"spend":27200.0}},"totalSpend":82928.0,"pctNotMeeting":0.0},{"name":"BayOne Solutions","regions":{"East":{"payRate":23.3,"mu":10.02,"billRate":33.31,"spend":229572.4},"Great Midwest":{"payRate":24.3,"mu":10.38,"billRate":34.68,"spend":344528.0},"North":{"payRate":21.92,"mu":9.39,"billRate":31.31,"spend":526978.32},"SouthEast":{"payRate":19.52,"mu":8.39,"billRate":27.91,"spend":225313.36},"SouthWest":{"payRate":22.99,"mu":9.89,"billRate":32.88,"spend":150113.36},"West":{"payRate":22.35,"mu":9.48,"billRate":31.83,"spend":399562.24}},"totalSpend":1876067.68,"pctNotMeeting":22.8},{"name":"CHG Medical Staffing,Inc dba CompHealth","regions":{"Great Midwest":{"payRate":86.4,"mu":0.0,"billRate":86.4,"spend":466992.0},"North":{"payRate":80.0,"mu":0.0,"billRate":80.0,"spend":265960.0},"West":{"payRate":101.4,"mu":43.6,"billRate":145.0,"spend":61600.0}},"totalSpend":794552.0,"pctNotMeeting":5.9},{"name":"Comtrix Solutions Inc","regions":{"North":{"payRate":42.9,"mu":9.6,"billRate":52.5,"spend":81900.0}},"totalSpend":81900.0,"pctNotMeeting":0.0},{"name":"Cynet Health Inc.","regions":{"West":{"payRate":21.05,"mu":9.05,"billRate":30.1,"spend":0.0}},"totalSpend":0.0,"pctNotMeeting":0.0},{"name":"Dynamic Talent Solutions Inc","regions":{"East":{"payRate":21.13,"mu":9.09,"billRate":30.22,"spend":9609.6},"Great Midwest":{"payRate":25.25,"mu":10.86,"billRate":36.11,"spend":17388.8},"North":{"payRate":35.67,"mu":6.02,"billRate":41.69,"spend":21086.0},"SouthEast":{"payRate":48.0,"mu":0.0,"billRate":48.0,"spend":0.0},"SouthWest":{"payRate":23.71,"mu":10.2,"billRate":33.9,"spend":17642.08},"West":{"payRate":22.87,"mu":9.83,"billRate":32.7,"spend":20362.0}},"totalSpend":86088.48,"pctNotMeeting":15.4},{"name":"Equiliem Healthcare","regions":{"East":{"payRate":19.1,"mu":7.74,"billRate":26.84,"spend":26715.12},"Great Midwest":{"payRate":17.0,"mu":6.63,"billRate":23.63,"spend":1890.4},"SouthEast":{"payRate":18.86,"mu":8.03,"billRate":26.89,"spend":212835.04},"SouthWest":{"payRate":20.56,"mu":8.84,"billRate":29.4,"spend":52548.56}},"totalSpend":293989.12,"pctNotMeeting":40.7},{"name":"eTeam, Inc","regions":{"East":{"payRate":20.94,"mu":9.0,"billRate":29.95,"spend":101530.48},"Great Midwest":{"payRate":29.55,"mu":8.63,"billRate":38.18,"spend":286459.76},"North":{"payRate":22.25,"mu":9.12,"billRate":31.36,"spend":45611.68},"SouthEast":{"payRate":19.32,"mu":8.31,"billRate":27.63,"spend":146200.88},"SouthWest":{"payRate":23.09,"mu":9.93,"billRate":33.02,"spend":219676.08},"West":{"payRate":23.69,"mu":10.32,"billRate":34.01,"spend":139849.6}},"totalSpend":939328.48,"pctNotMeeting":31.8},{"name":"Global Technical Talent","regions":{"East":{"payRate":21.31,"mu":9.21,"billRate":30.52,"spend":208779.28},"Great Midwest":{"payRate":27.41,"mu":9.66,"billRate":37.07,"spend":422348.88},"North":{"payRate":51.6,"mu":3.7,"billRate":55.3,"spend":252860.4},"SouthEast":{"payRate":20.8,"mu":8.95,"billRate":29.74,"spend":55835.6},"SouthWest":{"payRate":25.32,"mu":10.89,"billRate":36.21,"spend":161597.12},"West":{"payRate":23.31,"mu":10.1,"billRate":33.41,"spend":298739.2}},"totalSpend":1400160.48,"pctNotMeeting":19.5},{"name":"HealthCare Connections Inc.","regions":{"Great Midwest":{"payRate":73.5,"mu":0.0,"billRate":73.5,"spend":513768.0},"North":{"payRate":85.0,"mu":0.0,"billRate":85.0,"spend":136000.0},"SouthEast":{"payRate":79.0,"mu":0.0,"billRate":79.0,"spend":150416.0}},"totalSpend":800184.0,"pctNotMeeting":7.1},{"name":"Iconma LLC","regions":{"East":{"payRate":24.36,"mu":10.37,"billRate":34.74,"spend":128277.6},"Great Midwest":{"payRate":24.41,"mu":10.5,"billRate":34.91,"spend":160557.52},"North":{"payRate":26.74,"mu":11.5,"billRate":38.24,"spend":112247.2},"SouthEast":{"payRate":20.09,"mu":8.27,"billRate":28.36,"spend":468052.24},"SouthWest":{"payRate":27.04,"mu":11.48,"billRate":38.51,"spend":197501.28},"West":{"payRate":22.0,"mu":9.46,"billRate":31.47,"spend":281817.92}},"totalSpend":1348453.76,"pctNotMeeting":29.1},{"name":"Integrated Resources, Inc","regions":{"East":{"payRate":26.22,"mu":11.06,"billRate":37.28,"spend":400860.88},"Great Midwest":{"payRate":23.46,"mu":10.03,"billRate":33.49,"spend":391286.4},"North":{"payRate":29.86,"mu":7.65,"billRate":37.51,"spend":339466.0},"SouthEast":{"payRate":19.73,"mu":8.22,"billRate":27.96,"spend":1414144.4},"SouthWest":{"payRate":22.54,"mu":9.67,"billRate":32.21,"spend":449141.52},"West":{"payRate":24.18,"mu":10.37,"billRate":34.55,"spend":544761.28}},"totalSpend":3539660.48,"pctNotMeeting":35.7},{"name":"LanceSoft","regions":{"East":{"payRate":22.73,"mu":9.59,"billRate":32.32,"spend":172526.08},"Great Midwest":{"payRate":21.58,"mu":9.09,"billRate":30.67,"spend":256552.16},"North":{"payRate":19.78,"mu":8.14,"billRate":27.91,"spend":34010.4},"SouthEast":{"payRate":18.55,"mu":7.75,"billRate":26.3,"spend":89215.6},"SouthWest":{"payRate":22.07,"mu":9.49,"billRate":31.56,"spend":239217.2},"West":{"payRate":21.64,"mu":8.92,"billRate":30.57,"spend":272503.6}},"totalSpend":1064025.04,"pctNotMeeting":20.3},{"name":"Mindlance, Inc","regions":{"East":{"payRate":24.04,"mu":10.21,"billRate":34.26,"spend":187367.28},"Great Midwest":{"payRate":24.23,"mu":10.42,"billRate":34.65,"spend":188869.2},"North":{"payRate":20.8,"mu":8.94,"billRate":29.74,"spend":86188.96},"SouthEast":{"payRate":18.97,"mu":8.13,"billRate":27.11,"spend":611633.44},"SouthWest":{"payRate":22.28,"mu":9.56,"billRate":31.85,"spend":443662.64},"West":{"payRate":24.06,"mu":10.34,"billRate":34.4,"spend":227074.32}},"totalSpend":1744795.84,"pctNotMeeting":28.7},{"name":"MTSS Staffing, LLC","regions":{"East":{"payRate":25.0,"mu":10.75,"billRate":35.75,"spend":28600.0},"Great Midwest":{"payRate":18.0,"mu":7.33,"billRate":25.33,"spend":72745.04},"SouthEast":{"payRate":19.23,"mu":8.27,"billRate":27.51,"spend":28631.44},"SouthWest":{"payRate":22.53,"mu":9.69,"billRate":32.22,"spend":1546.56}},"totalSpend":131523.04,"pctNotMeeting":41.7},{"name":"Pinnacle","regions":{"East":{"payRate":24.58,"mu":10.49,"billRate":35.07,"spend":276728.24},"Great Midwest":{"payRate":24.3,"mu":10.45,"billRate":34.75,"spend":206838.72},"North":{"payRate":20.29,"mu":8.72,"billRate":29.02,"spend":42823.76},"SouthEast":{"payRate":20.63,"mu":8.87,"billRate":29.51,"spend":194367.68},"SouthWest":{"payRate":21.23,"mu":9.13,"billRate":30.37,"spend":159834.24},"West":{"payRate":22.46,"mu":9.6,"billRate":32.06,"spend":328617.28}},"totalSpend":1209209.92,"pctNotMeeting":17.4},{"name":"Pride Global Healthcare LLC","regions":{"East":{"payRate":23.31,"mu":10.02,"billRate":33.33,"spend":40359.04},"Great Midwest":{"payRate":22.88,"mu":9.74,"billRate":32.62,"spend":211375.92},"North":{"payRate":20.63,"mu":8.64,"billRate":29.28,"spend":34479.6},"SouthEast":{"payRate":20.09,"mu":8.64,"billRate":28.73,"spend":289805.2},"SouthWest":{"payRate":20.4,"mu":8.77,"billRate":29.17,"spend":57414.8},"West":{"payRate":26.42,"mu":11.22,"billRate":37.63,"spend":67967.44}},"totalSpend":701402.0,"pctNotMeeting":29.5},{"name":"Pride Healthcare LLC","regions":{"East":{"payRate":21.08,"mu":9.06,"billRate":30.15,"spend":104290.32},"Great Midwest":{"payRate":25.11,"mu":10.72,"billRate":35.83,"spend":126681.28},"North":{"payRate":22.0,"mu":9.46,"billRate":31.46,"spend":26678.08},"SouthEast":{"payRate":18.83,"mu":8.03,"billRate":26.87,"spend":415584.32},"SouthWest":{"payRate":19.74,"mu":8.49,"billRate":28.23,"spend":80326.4},"West":{"payRate":21.63,"mu":9.28,"billRate":30.91,"spend":200706.48}},"totalSpend":954266.88,"pctNotMeeting":33.3},{"name":"Randstad","regions":{"East":{"payRate":24.15,"mu":10.38,"billRate":34.53,"spend":6906.0},"Great Midwest":{"payRate":22.0,"mu":9.46,"billRate":31.46,"spend":26426.4},"North":{"payRate":20.0,"mu":8.6,"billRate":28.6,"spend":18532.8},"SouthEast":{"payRate":19.78,"mu":8.51,"billRate":28.29,"spend":55222.08},"SouthWest":{"payRate":23.33,"mu":10.03,"billRate":33.37,"spend":1601.6},"West":{"payRate":21.92,"mu":9.42,"billRate":31.34,"spend":16116.0}},"totalSpend":124804.88,"pctNotMeeting":42.1},{"name":"Rangam Consultants, Inc.","regions":{"East":{"payRate":22.0,"mu":9.27,"billRate":31.27,"spend":167878.56},"Great Midwest":{"payRate":24.62,"mu":10.47,"billRate":35.1,"spend":120041.52},"North":{"payRate":20.83,"mu":8.88,"billRate":29.71,"spend":179883.2},"SouthEast":{"payRate":19.85,"mu":8.51,"billRate":28.36,"spend":635156.64},"SouthWest":{"payRate":20.37,"mu":8.68,"billRate":29.05,"spend":76670.24},"West":{"payRate":23.59,"mu":9.87,"billRate":33.45,"spend":68140.8}},"totalSpend":1247770.96,"pctNotMeeting":34.7},{"name":"Smith & Dean, Inc","regions":{"SouthEast":{"payRate":17.0,"mu":6.46,"billRate":23.46,"spend":11636.16},"SouthWest":{"payRate":20.34,"mu":8.75,"billRate":29.09,"spend":223603.04}},"totalSpend":235239.2,"pctNotMeeting":25.0},{"name":"Soliant Health","regions":{"East":{"payRate":62.35,"mu":37.65,"billRate":100.0,"spend":80000.0}},"totalSpend":80000.0,"pctNotMeeting":0.0},{"name":"Spectraforce Technologies","regions":{"East":{"payRate":22.19,"mu":9.3,"billRate":31.49,"spend":490545.84},"Great Midwest":{"payRate":23.44,"mu":10.0,"billRate":33.44,"spend":325492.56},"North":{"payRate":20.36,"mu":8.68,"billRate":29.04,"spend":143111.12},"SouthEast":{"payRate":19.56,"mu":8.36,"billRate":27.92,"spend":1054983.76},"SouthWest":{"payRate":19.88,"mu":8.49,"billRate":28.37,"spend":132336.48},"West":{"payRate":22.71,"mu":9.69,"billRate":32.4,"spend":392157.36}},"totalSpend":2538627.12,"pctNotMeeting":27.5},{"name":"Synectics","regions":{"East":{"payRate":29.7,"mu":12.73,"billRate":42.43,"spend":846145.76},"Great Midwest":{"payRate":21.89,"mu":9.3,"billRate":31.2,"spend":289148.64},"North":{"payRate":19.92,"mu":8.49,"billRate":28.41,"spend":147582.8},"SouthEast":{"payRate":19.1,"mu":8.19,"billRate":27.29,"spend":728597.6},"SouthWest":{"payRate":23.31,"mu":10.0,"billRate":33.3,"spend":182941.12},"West":{"payRate":22.36,"mu":9.57,"billRate":31.94,"spend":493854.48}},"totalSpend":2688270.4,"pctNotMeeting":22.9},{"name":"Synergy Global Systems, Inc","regions":{"East":{"payRate":22.66,"mu":9.52,"billRate":32.18,"spend":113741.2},"Great Midwest":{"payRate":21.0,"mu":8.69,"billRate":29.69,"spend":61071.6},"North":{"payRate":19.7,"mu":8.01,"billRate":27.71,"spend":55510.8},"SouthEast":{"payRate":17.45,"mu":6.82,"billRate":24.27,"spend":36304.96},"SouthWest":{"payRate":20.88,"mu":8.98,"billRate":29.86,"spend":89196.64},"West":{"payRate":21.3,"mu":8.97,"billRate":30.27,"spend":106011.68}},"totalSpend":461836.88,"pctNotMeeting":17.4},{"name":"TalentBurst, Inc.","regions":{"East":{"payRate":24.53,"mu":7.3,"billRate":31.83,"spend":2258039.12},"Great Midwest":{"payRate":23.6,"mu":7.35,"billRate":30.95,"spend":925980.08},"North":{"payRate":19.07,"mu":4.78,"billRate":23.86,"spend":2224615.44},"SouthEast":{"payRate":18.78,"mu":6.01,"billRate":24.8,"spend":4393311.44},"SouthWest":{"payRate":22.67,"mu":7.09,"billRate":29.76,"spend":760563.12},"West":{"payRate":23.02,"mu":7.16,"billRate":30.18,"spend":1462239.76}},"totalSpend":12024748.96,"pctNotMeeting":22.0},{"name":"TEKsystems, Inc.","regions":{"North":{"payRate":18.5,"mu":7.03,"billRate":25.53,"spend":12254.4}},"totalSpend":12254.4,"pctNotMeeting":16.0},{"name":"Triage, LLC","regions":{"East":{"payRate":110.0,"mu":0.0,"billRate":110.0,"spend":128480.0},"Great Midwest":{"payRate":76.41,"mu":0.0,"billRate":76.41,"spend":1713552.0},"North":{"payRate":72.14,"mu":0.0,"billRate":72.14,"spend":680280.0},"SouthEast":{"payRate":48.0,"mu":0.0,"billRate":48.0,"spend":54144.0}},"totalSpend":2576456.0,"pctNotMeeting":3.6},{"name":"Yoh Services LLC","regions":{"East":{"payRate":23.38,"mu":9.44,"billRate":32.81,"spend":63427.2},"Great Midwest":{"payRate":17.6,"mu":7.57,"billRate":25.17,"spend":17907.36},"SouthWest":{"payRate":20.0,"mu":8.6,"billRate":28.6,"spend":19905.6}},"totalSpend":101240.16,"pctNotMeeting":12.5}];
+
+const REGIONS = ['East','Great Midwest','North','SouthEast','SouthWest','West'];
+
+// compute derived fields
+RAW.forEach(s => {
+  let muVals=[], prVals=[], brVals=[];
+  REGIONS.forEach(r => {
+    const rd = s.regions[r];
+    if(rd){
+      if(rd.mu  != null) muVals.push(rd.mu);
+      if(rd.payRate != null) prVals.push(rd.payRate);
+      if(rd.billRate != null) brVals.push(rd.billRate);
+    }
+  });
+  s.avgMu   = muVals.length   ? muVals.reduce((a,b)=>a+b,0)/muVals.length   : null;
+  s.avgPr   = prVals.length   ? prVals.reduce((a,b)=>a+b,0)/prVals.length   : null;
+  s.avgBr   = brVals.length   ? brVals.reduce((a,b)=>a+b,0)/brVals.length   : null;
+  s.regCount = Object.keys(s.regions).length;
+});
+
+const totalSpend = RAW.reduce((a,s)=>a+(s.totalSpend||0),0);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// FILTERS
+// ─────────────────────────────────────────────────────────────────────────────
+const supSelect = document.getElementById('filterSupplier');
+RAW.forEach(s=>{ const o=document.createElement('option'); o.value=o.text=s.name; supSelect.appendChild(o); });
+
+function getFilters(){
+  return {
+    region:   document.getElementById('filterRegion').value,
+    supplier: document.getElementById('filterSupplier').value,
+    minSpend: parseFloat(document.getElementById('filterSpend').value)||0
+  };
+}
+
+function filteredData(){
+  const f = getFilters();
+  return RAW.filter(s=>{
+    if(f.supplier !== 'All' && s.name !== f.supplier) return false;
+    if((s.totalSpend||0) < f.minSpend) return false;
+    if(f.region !== 'All' && !s.regions[f.region]) return false;
+    return true;
+  });
+}
+
+function applyFilters(){
+  buildKPIs();
+  buildTop10Chart();
+  buildParetoChart();
+  buildCompTable();
+  buildSpendKPIs();
+  buildSpendBarChart();
+  buildRegionSpendChart();
+  buildRegionCountChart();
+  buildScatter();
+  buildPerfTable();
+  buildHeatmap();
+  buildRegionPerfChart();
+  buildRegionRatesChart();
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// NAVIGATION
+// ─────────────────────────────────────────────────────────────────────────────
+function showPage(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  event.target.classList.add('active');
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// HELPERS
+// ─────────────────────────────────────────────────────────────────────────────
+const fmt$ = v => v==null?'—':'$'+v.toLocaleString('en-US',{maximumFractionDigits:0});
+const fmtM = v => v==null?'—':'$'+(v/1e6).toFixed(2)+'M';
+const fmtPct = v => v==null?'—':v.toFixed(1)+'%';
+const fmtN  = (v,d=2) => v==null?'—':v.toFixed(d);
+
+function getPillClass(pct){
+  if(pct==null) return 'pill-green';
+  if(pct <= 20) return 'pill-green';
+  if(pct <= 35) return 'pill-amber';
+  return 'pill-red';
+}
+function getMUTier(mu){
+  if(mu == null || mu === 0) return '<span class="pill pill-green">$0 / Direct</span>';
+  if(mu <= 8)  return '<span class="pill pill-green">Low (≤$8)</span>';
+  if(mu <= 10) return '<span class="pill pill-amber">Mid ($8–$10)</span>';
+  return '<span class="pill pill-red">High (>$10)</span>';
+}
+function getQuadrant(br, notMeeting){
+  if(br==null||notMeeting==null) return '—';
+  const hiBR = br > 31; const hiNM = notMeeting > 25;
+  if(!hiBR && !hiNM) return '<span class="pill pill-green">Best Value</span>';
+  if(hiBR  && !hiNM) return '<span class="pill pill-amber">Pricey/Reliable</span>';
+  if(!hiBR && hiNM)  return '<span class="pill" style="background:#E3F2FD;color:#1565C0">Low Cost/Perf Risk</span>';
+  return '<span class="pill pill-red">Underperforming</span>';
+}
+
+// Simple SVG bar chart
+function drawBars(svgId, labels, values, options={}){
+  const svg = document.getElementById(svgId);
+  if(!svg) return;
+  const W = svg.parentElement.clientWidth || 500;
+  const H = parseInt(svg.getAttribute('height'))||300;
+  const pad = options.pad || {top:20, right:20, bottom: options.bottomPad||60, left: options.leftPad||50};
+  const cW = W - pad.left - pad.right;
+  const cH = H - pad.top - pad.bottom;
+  const maxV = Math.max(...values)*1.1;
+  const barW = cW / labels.length * 0.7;
+  const colors = options.colors || labels.map((_,i)=>['#1E88E5','#0D47A1','#1565C0','#1976D2','#42A5F5','#0A6EBD'][i%6]);
+
+  let html = `<svg id="${svgId}" width="100%" height="${H}">`;
+  html += `<g transform="translate(${pad.left},${pad.top})">`;
+
+  // Y axis gridlines
+  [0,.25,.5,.75,1].forEach(t=>{
+    const y = cH - t*cH;
+    html += `<line x1="0" y1="${y}" x2="${cW}" y2="${y}" stroke="#EEE" stroke-width="1"/>`;
+    const lbl = options.yFmt ? options.yFmt(t*maxV) : (t*maxV).toFixed(1);
+    html += `<text x="-6" y="${y+4}" text-anchor="end" font-size="10" fill="#888">${lbl}</text>`;
+  });
+
+  labels.forEach((lbl,i)=>{
+    const x = (i+0.15) * cW / labels.length + (cW/labels.length - barW)/2 * 0.5;
+    const barH = (values[i]/maxV)*cH;
+    const y = cH - barH;
+    const color = Array.isArray(colors) ? colors[i] : colors;
+    html += `<rect x="${x}" y="${y}" width="${barW}" height="${barH}" fill="${color}" rx="3" opacity=".9"/>`;
+    // value label
+    if(options.valFmt){
+      html += `<text x="${x+barW/2}" y="${y-4}" text-anchor="middle" font-size="9" fill="#444">${options.valFmt(values[i])}</text>`;
+    }
+    // x label - truncate
+    const shortLbl = lbl.length > 12 ? lbl.substring(0,11)+'…' : lbl;
+    html += `<text x="${x+barW/2}" y="${cH+14}" text-anchor="end" font-size="9" fill="#666" transform="rotate(-40,${x+barW/2},${cH+14})">${shortLbl}</text>`;
+  });
+
+  html += `<line x1="0" y1="0" x2="0" y2="${cH}" stroke="#CCC" stroke-width="1"/>`;
+  html += `<line x1="0" y1="${cH}" x2="${cW}" y2="${cH}" stroke="#CCC" stroke-width="1"/>`;
+  html += `</g></svg>`;
+  svg.outerHTML = html;
+}
+
+function drawHorizBars(svgId, labels, values, options={}){
+  const svg = document.getElementById(svgId);
+  if(!svg) return;
+  const W = svg.parentElement.clientWidth || 500;
+  const rowH = options.rowH || 18;
+  const H = Math.max(labels.length * rowH + 60, 100);
+  const pad = {top:10, right:80, bottom:30, left: options.leftPad||180};
+  const cW = W - pad.left - pad.right;
+  const maxV = Math.max(...values)*1.05;
+  const colors = options.colors || labels.map((_,i)=>{
+    const v = values[i]; const pct = v/maxV;
+    if(pct>0.6) return '#0D47A1'; if(pct>0.3) return '#1E88E5'; return '#64B5F6';
+  });
+
+  let html = `<svg id="${svgId}" width="100%" height="${H}">`;
+  html += `<g transform="translate(${pad.left},${pad.top})">`;
+
+  labels.forEach((lbl,i)=>{
+    const y = i*rowH + rowH*0.1;
+    const bH = rowH*0.75;
+    const bW = (values[i]/maxV)*cW;
+    const color = Array.isArray(colors)?colors[i]:colors;
+    html += `<rect x="0" y="${y}" width="${bW}" height="${bH}" fill="${color}" rx="2" opacity=".85"/>`;
+    const shortLbl = lbl.length > 26 ? lbl.substring(0,25)+'…' : lbl;
+    html += `<text x="-6" y="${y+bH*0.75}" text-anchor="end" font-size="11" fill="#333">${shortLbl}</text>`;
+    const valLbl = options.valFmt ? options.valFmt(values[i]) : values[i].toFixed(1);
+    html += `<text x="${bW+4}" y="${y+bH*0.75}" font-size="10" fill="#555">${valLbl}</text>`;
+  });
+
+  html += `</g></svg>`;
+  svg.outerHTML = html;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// KPI ROW — OVERVIEW
+// ─────────────────────────────────────────────────────────────────────────────
+function buildKPIs(){
+  const data = filteredData().filter(s=>s.totalSpend>0);
+  const ts = data.reduce((a,s)=>a+(s.totalSpend||0),0);
+  const ns = data.length;
+  const avgMu = data.filter(s=>s.avgMu).reduce((a,s)=>a+s.avgMu*s.totalSpend,0) / ts;
+  const avgNM = data.filter(s=>s.pctNotMeeting!=null).reduce((a,s)=>a+s.pctNotMeeting*(s.totalSpend||0),0) / ts;
+  const top1pct = (Math.max(...data.map(s=>s.totalSpend||0))/ts*100).toFixed(1);
+
+  document.getElementById('kpi-row').innerHTML = `
+    <div class="kpi"><div class="kpi-val">${fmtM(ts)}</div><div class="kpi-lbl">Total Program Spend</div><div class="kpi-sub">YTD across all regions</div></div>
+    <div class="kpi accent"><div class="kpi-val">${ns}</div><div class="kpi-lbl">Active Suppliers</div><div class="kpi-sub">${REGIONS.length} regions covered</div></div>
+    <div class="kpi amber"><div class="kpi-val">$${avgMu.toFixed(2)}</div><div class="kpi-lbl">Wtd Avg Markup ($)</div><div class="kpi-sub">Excl. direct-bill suppliers</div></div>
+    <div class="kpi red"><div class="kpi-val">${avgNM.toFixed(1)}%</div><div class="kpi-lbl">Avg Not Meeting Exp.</div><div class="kpi-sub">Weighted by spend</div></div>
+    <div class="kpi red"><div class="kpi-val">${top1pct}%</div><div class="kpi-lbl">Top Supplier Concentration</div><div class="kpi-sub">Single supplier % of total</div></div>
+  `;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TOP 10 CHART
+// ─────────────────────────────────────────────────────────────────────────────
+function buildTop10Chart(){
+  const data = filteredData().filter(s=>s.totalSpend>0).sort((a,b)=>b.totalSpend-a.totalSpend).slice(0,10);
+  drawBars('chart-top10', data.map(s=>s.name), data.map(s=>s.totalSpend),
+    { yFmt: v=>'$'+(v/1e6).toFixed(1)+'M', valFmt: v=>'$'+(v/1e6).toFixed(1)+'M', bottomPad:80 });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PARETO CHART
+// ─────────────────────────────────────────────────────────────────────────────
+function buildParetoChart(){
+  const svg = document.getElementById('chart-pareto');
+  if(!svg) return;
+  const data = filteredData().filter(s=>s.totalSpend>0).sort((a,b)=>b.totalSpend-a.totalSpend);
+  const ts2 = data.reduce((a,s)=>a+s.totalSpend,0);
+  let cum = 0;
+  const cumPcts = data.map(s=>{ cum+=s.totalSpend; return cum/ts2*100; });
+
+  const W = svg.parentElement.clientWidth || 500;
+  const H = 300; const pad={top:20,right:20,bottom:60,left:50};
+  const cW=W-pad.left-pad.right, cH=H-pad.top-pad.bottom;
+  const n = data.length;
+
+  let html = `<svg id="chart-pareto" width="100%" height="${H}"><g transform="translate(${pad.left},${pad.top})">`;
+  // bars
+  data.forEach((s,i)=>{
+    const x = i*cW/n; const bW=cW/n*0.7;
+    const bH=(s.totalSpend/Math.max(...data.map(d=>d.totalSpend)))*cH;
+    html+=`<rect x="${x}" y="${cH-bH}" width="${bW}" height="${bH}" fill="#1E88E5" rx="2" opacity=".7"/>`;
+    const shortLbl = s.name.length>12 ? s.name.substring(0,11)+'…' : s.name;
+    html+=`<text x="${x+bW/2}" y="${cH+14}" text-anchor="end" font-size="9" fill="#666" transform="rotate(-40,${x+bW/2},${cH+14})">${shortLbl}</text>`;
+  });
+  // cumulative line
+  let pts = cumPcts.map((p,i)=>{
+    const x=i*cW/n+cW/n*0.35; const y=cH-p/100*cH; return `${x},${y}`;
+  }).join(' ');
+  html+=`<polyline points="${pts}" fill="none" stroke="#D32F2F" stroke-width="2"/>`;
+  // 80% line
+  const y80 = cH - 0.8*cH;
+  html+=`<line x1="0" y1="${y80}" x2="${cW}" y2="${y80}" stroke="#E65100" stroke-width="1" stroke-dasharray="4"/>`;
+  html+=`<text x="${cW+2}" y="${y80+4}" font-size="9" fill="#E65100">80%</text>`;
+
+  // Right Y axis
+  [0,.25,.5,.75,1].forEach(t=>{
+    html+=`<text x="${cW+2}" y="${cH-t*cH+4}" font-size="9" fill="#888">${(t*100).toFixed(0)}%</text>`;
+  });
+  html+=`<line x1="0" y1="0" x2="0" y2="${cH}" stroke="#CCC"/><line x1="0" y1="${cH}" x2="${cW}" y2="${cH}" stroke="#CCC"/>`;
+  html+=`</g></svg>`;
+  svg.outerHTML=html;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// COMPETITIVENESS TABLE
+// ─────────────────────────────────────────────────────────────────────────────
+function buildCompTable(){
+  const f = getFilters();
+  const data = filteredData().filter(s=>s.totalSpend>0);
+  let rows = '';
+  data.forEach(s=>{
+    let mu = s.avgMu, pr = s.avgPr, br = s.avgBr;
+    if(f.region !== 'All' && s.regions[f.region]){
+      const rd = s.regions[f.region];
+      mu = rd.mu; pr = rd.payRate; br = rd.billRate;
+    }
+    rows += `<tr>
+      <td>${s.name}</td>
+      <td><strong>${fmtN(mu)}</strong></td>
+      <td>${fmtN(pr)}</td>
+      <td>${fmtN(br)}</td>
+      <td>${fmt$(s.totalSpend)}</td>
+      <td>${s.regCount}</td>
+      <td>${getMUTier(mu)}</td>
+    </tr>`;
+  });
+  document.getElementById('tbl-comp-body').innerHTML = rows;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SPEND PAGE KPIs
+// ─────────────────────────────────────────────────────────────────────────────
+function buildSpendKPIs(){
+  const data = filteredData().filter(s=>s.totalSpend>0).sort((a,b)=>b.totalSpend-a.totalSpend);
+  const ts2 = data.reduce((a,s)=>a+s.totalSpend,0);
+  const top3 = data.slice(0,3).reduce((a,s)=>a+s.totalSpend,0);
+  const tail = data.filter(s=>s.totalSpend<200000).length;
+  const hhi  = data.reduce((a,s)=>a+Math.pow(s.totalSpend/ts2*100,2),0).toFixed(0);
+
+  document.getElementById('kpi-spend-row').innerHTML = `
+    <div class="kpi"><div class="kpi-val">${fmtM(ts2)}</div><div class="kpi-lbl">Total Spend</div></div>
+    <div class="kpi red"><div class="kpi-val">${(top3/ts2*100).toFixed(1)}%</div><div class="kpi-lbl">Top-3 Concentration</div><div class="kpi-sub">Recommended: &lt;30%</div></div>
+    <div class="kpi amber"><div class="kpi-val">${data.length}</div><div class="kpi-lbl">Active Suppliers</div><div class="kpi-sub">${tail} below $200K</div></div>
+    <div class="kpi amber"><div class="kpi-val">${hhi}</div><div class="kpi-lbl">HHI (Concentration Index)</div><div class="kpi-sub">Highly concentrated &gt;2500</div></div>
+  `;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SPEND BAR
+// ─────────────────────────────────────────────────────────────────────────────
+function buildSpendBarChart(){
+  const data = filteredData().filter(s=>s.totalSpend>0).sort((a,b)=>b.totalSpend-a.totalSpend);
+  drawHorizBars('chart-spend-bar', data.map(s=>s.name), data.map(s=>s.totalSpend),
+    { rowH:20, leftPad:200, valFmt: v=>'$'+(v/1e6).toFixed(2)+'M' });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// REGION SPEND + COUNT CHARTS
+// ─────────────────────────────────────────────────────────────────────────────
+function buildRegionSpendChart(){
+  const f = getFilters();
+  const data = filteredData();
+  const regSpend = {};
+  REGIONS.forEach(r=>{ regSpend[r]=0; });
+  data.forEach(s=>{
+    REGIONS.forEach(r=>{
+      if(s.regions[r] && s.regions[r].spend) regSpend[r]+=s.regions[r].spend;
+    });
+  });
+  const vals = REGIONS.map(r=>regSpend[r]);
+  const maxSpend = Math.max(...vals);
+  const colors = REGIONS.map((_,i)=>['#0D47A1','#1565C0','#1976D2','#1E88E5','#42A5F5','#64B5F6'][i]);
+  drawBars('chart-region-spend', REGIONS, vals,
+    { colors, yFmt:v=>'$'+(v/1e6).toFixed(1)+'M', valFmt:v=>'$'+(v/1e6).toFixed(1)+'M', bottomPad:40 });
+}
+
+function buildRegionCountChart(){
+  const data = filteredData();
+  const regCount = {};
+  REGIONS.forEach(r=>{ regCount[r]=0; });
+  data.forEach(s=>{
+    REGIONS.forEach(r=>{ if(s.regions[r]) regCount[r]++; });
+  });
+  drawBars('chart-region-count', REGIONS, REGIONS.map(r=>regCount[r]),
+    { colors:REGIONS.map(()=>'#42A5F5'), bottomPad:40, yFmt:v=>Math.round(v)+'' });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SCATTER CHART
+// ─────────────────────────────────────────────────────────────────────────────
+function buildScatter(){
+  const svg = document.getElementById('chart-scatter');
+  if(!svg) return;
+  const data = filteredData().filter(s=>s.totalSpend>0 && s.avgBr!=null && s.pctNotMeeting!=null);
+  const W = svg.parentElement.clientWidth || 700;
+  const H = 460; const pad={top:30,right:30,bottom:60,left:60};
+  const cW=W-pad.left-pad.right, cH=H-pad.top-pad.bottom;
+
+  const brMax=Math.max(...data.map(s=>s.avgBr))*1.1;
+  const nmMax=Math.max(...data.map(s=>s.pctNotMeeting))*1.1;
+  const spMax=Math.max(...data.map(s=>s.totalSpend));
+
+  const brMid=31, nmMid=25;
+
+  function dotColor(s){
+    const hiBR=s.avgBr>brMid, hiNM=s.pctNotMeeting>nmMid;
+    if(!hiBR&&!hiNM) return '#2E7D32';
+    if(hiBR &&!hiNM) return '#E65100';
+    if(!hiBR&& hiNM) return '#1565C0';
+    return '#D32F2F';
+  }
+
+  let html=`<svg id="chart-scatter" width="100%" height="${H}"><g transform="translate(${pad.left},${pad.top})">`;
+
+  // Quadrant shading
+  const mx=brMid/brMax*cW, my=nmMid/nmMax*cH;
+  html+=`<rect x="0" y="0" width="${mx}" height="${cH-my}" fill="#E8F5E9" opacity=".5"/>`;
+  html+=`<rect x="${mx}" y="0" width="${cW-mx}" height="${cH-my}" fill="#FFF8E1" opacity=".5"/>`;
+  html+=`<rect x="0" y="${cH-my}" width="${mx}" height="${my}" fill="#E3F2FD" opacity=".5"/>`;
+  html+=`<rect x="${mx}" y="${cH-my}" width="${cW-mx}" height="${my}" fill="#FFEBEE" opacity=".5"/>`;
+
+  // Quadrant labels
+  html+=`<text x="4" y="14" font-size="9" fill="#2E7D32" font-weight="600">BEST VALUE</text>`;
+  html+=`<text x="${cW-4}" y="14" text-anchor="end" font-size="9" fill="#E65100" font-weight="600">PRICEY / RELIABLE</text>`;
+  html+=`<text x="4" y="${cH-4}" font-size="9" fill="#1565C0" font-weight="600">LOW COST / PERF RISK</text>`;
+  html+=`<text x="${cW-4}" y="${cH-4}" text-anchor="end" font-size="9" fill="#D32F2F" font-weight="600">UNDERPERFORMING</text>`;
+
+  // Midlines
+  html+=`<line x1="${mx}" y1="0" x2="${mx}" y2="${cH}" stroke="#999" stroke-width="1" stroke-dasharray="4"/>`;
+  html+=`<line x1="0" y1="${cH-my}" x2="${cW}" y2="${cH-my}" stroke="#999" stroke-width="1" stroke-dasharray="4"/>`;
+
+  // Gridlines
+  [0,.25,.5,.75,1].forEach(t=>{
+    const y=cH-t*cH;
+    html+=`<line x1="0" y1="${y}" x2="${cW}" y2="${y}" stroke="#EEE" stroke-width="1"/>`;
+    html+=`<text x="-4" y="${y+4}" text-anchor="end" font-size="9" fill="#888">${(t*nmMax).toFixed(0)}%</text>`;
+    const x=t*cW;
+    html+=`<line x1="${x}" y1="0" x2="${x}" y2="${cH}" stroke="#EEE" stroke-width="1"/>`;
+    html+=`<text x="${x}" y="${cH+14}" text-anchor="middle" font-size="9" fill="#888">$${(t*brMax).toFixed(0)}</text>`;
+  });
+
+  // Bubbles
+  data.forEach(s=>{
+    const cx=s.avgBr/brMax*cW;
+    const cy=cH-s.pctNotMeeting/nmMax*cH;
+    const r=Math.max(6, Math.min(30, Math.sqrt(s.totalSpend/spMax)*50));
+    const color=dotColor(s);
+    html+=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="${color}" opacity=".7" stroke="white" stroke-width="1.5"
+      onmouseover="showTip(event,'${s.name}','Bill Rate: $${s.avgBr.toFixed(2)}','Pay Rate: $${(s.avgPr||0).toFixed(2)} + MU: $${(s.avgMu||0).toFixed(2)}','${s.pctNotMeeting.toFixed(1)}% not-meeting · $${(s.totalSpend/1e6).toFixed(2)}M spend')"
+      onmouseout="hideTip()"/>`;
+    if(s.totalSpend > 1000000){
+      const lbl=s.name.split(' ')[0];
+      html+=`<text x="${cx}" y="${cy-r-3}" text-anchor="middle" font-size="9" fill="#333">${lbl}</text>`;
+    }
+  });
+
+  html+=`<line x1="0" y1="0" x2="0" y2="${cH}" stroke="#CCC"/><line x1="0" y1="${cH}" x2="${cW}" y2="${cH}" stroke="#CCC"/>`;
+  html+=`<text x="${cW/2}" y="${cH+30}" text-anchor="middle" font-size="11" fill="#555">Average Bill Rate (Pay Rate + MU)</text>`;
+  html+=`<text transform="rotate(-90)" x="${-cH/2}" y="-44" text-anchor="middle" font-size="11" fill="#555">% Not Meeting Expectations</text>`;
+  html+=`</g></svg>`;
+  svg.outerHTML=html;
+}
+
+function showTip(e, name, mu, nm, spend){
+  const tip=document.getElementById('tooltip');
+  tip.innerHTML=`<strong>${name}</strong><br>${mu}<br>${nm}<br>${spend}`;
+  tip.style.display='block';
+  tip.style.left=(e.offsetX+10)+'px';
+  tip.style.top=(e.offsetY-10)+'px';
+}
+function hideTip(){ document.getElementById('tooltip').style.display='none'; }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PERFORMANCE TABLE
+// ─────────────────────────────────────────────────────────────────────────────
+function buildPerfTable(){
+  const data = filteredData().filter(s=>s.totalSpend>0 && s.avgBr!=null && s.pctNotMeeting!=null);
+  // Value score: lower Bill Rate and lower not-meeting = better
+  const brMax2 = Math.max(...data.map(s=>s.avgBr));
+  const nmMax2 = Math.max(...data.map(s=>s.pctNotMeeting));
+  data.forEach(s=>{
+    s.valueScore = 100 - ((s.avgBr/brMax2)*50 + (s.pctNotMeeting/nmMax2)*50);
+  });
+  data.sort((a,b)=>b.valueScore-a.valueScore);
+  let rows='';
+  data.forEach((s,i)=>{
+    rows+=`<tr>
+      <td>${i+1}</td>
+      <td>${s.name}</td>
+      <td>$${fmtN(s.avgBr)} <span style="color:#888;font-size:11px">(PR $${fmtN(s.avgPr)} + MU $${fmtN(s.avgMu)})</span></td>
+      <td><span class="pill ${getPillClass(s.pctNotMeeting)}">${fmtPct(s.pctNotMeeting)}</span></td>
+      <td>${fmt$(s.totalSpend)}</td>
+      <td><strong>${s.valueScore.toFixed(1)}</strong></td>
+      <td>${getQuadrant(s.avgBr,s.pctNotMeeting)}</td>
+    </tr>`;
+  });
+  document.getElementById('tbl-perf-body').innerHTML=rows;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// HEATMAP
+// ─────────────────────────────────────────────────────────────────────────────
+function buildHeatmap(){
+  const f = getFilters();
+  const data = filteredData().filter(s=>s.totalSpend>0);
+  // gather all MU values for color scale
+  let allMU=[];
+  data.forEach(s=>REGIONS.forEach(r=>{ if(s.regions[r]&&s.regions[r].mu>0) allMU.push(s.regions[r].mu); }));
+  const muMin2=Math.min(...allMU), muMax3=Math.max(...allMU);
+
+  function muColor(mu){
+    if(mu==null||mu===0) return '#F5F5F5';
+    const t=(mu-muMin2)/(muMax3-muMin2);
+    const r=Math.round(13+(210-13)*t), g=Math.round(71+(237-71)*(1-t)), b=Math.round(161+(248-161)*(1-t));
+    // low = light green, high = dark red
+    if(t<0.33) return `hsl(207,${Math.round(50+t*50)}%,${Math.round(85-t*30)}%)`;
+    if(t<0.66) return `hsl(${Math.round(207-t*150)},60%,${Math.round(70-t*20)}%)`;
+    return `hsl(${Math.round(40-t*40)},80%,${Math.round(55-t*20)}%)`;
+  }
+
+  let html=`<thead><tr><th>Supplier</th>`;
+  REGIONS.forEach(r=>html+=`<th>${r}</th>`);
+  html+=`<th>Avg MU</th></tr></thead><tbody>`;
+
+  data.forEach(s=>{
+    html+=`<tr><td class="supplier-name">${s.name}</td>`;
+    REGIONS.forEach(r=>{
+      const rd=s.regions[r];
+      if(rd&&rd.mu!=null){
+        const bg=muColor(rd.mu);
+        const txt=rd.mu===0?'$0 DirBill':'$'+rd.mu.toFixed(2);
+        const tc=rd.mu>10?'#fff':'#333';
+        html+=`<td style="background:${bg};color:${tc}">${txt}</td>`;
+      } else {
+        html+=`<td class="empty">—</td>`;
+      }
+    });
+    html+=`<td><strong>$${s.avgMu?s.avgMu.toFixed(2):'—'}</strong></td></tr>`;
+  });
+  html+=`</tbody>`;
+  document.getElementById('tbl-heatmap').innerHTML=html;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// REGIONAL PERFORMANCE CHART
+// ─────────────────────────────────────────────────────────────────────────────
+function buildRegionPerfChart(){
+  const data = filteredData().filter(s=>s.totalSpend>0);
+  const regData = {};
+  REGIONS.forEach(r=>{ regData[r]={sumNM:0, sumSpend:0}; });
+  data.forEach(s=>{
+    if(s.pctNotMeeting==null) return;
+    REGIONS.forEach(r=>{
+      if(s.regions[r]&&s.regions[r].spend>0){
+        regData[r].sumNM += s.pctNotMeeting * s.regions[r].spend;
+        regData[r].sumSpend += s.regions[r].spend;
+      }
+    });
+  });
+  const vals = REGIONS.map(r=> regData[r].sumSpend>0 ? regData[r].sumNM/regData[r].sumSpend : 0);
+  const colors = vals.map(v=> v<20?'#2E7D32': v<30?'#F9A825':'#D32F2F');
+  drawBars('chart-region-perf', REGIONS, vals, {
+    colors, yFmt:v=>v.toFixed(1)+'%', valFmt:v=>v.toFixed(1)+'%', bottomPad:40
+  });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// REGIONAL RATES CHART (grouped: pay rate vs bill rate)
+// ─────────────────────────────────────────────────────────────────────────────
+function buildRegionRatesChart(){
+  const data = filteredData();
+  const regData={};
+  REGIONS.forEach(r=>{ regData[r]={muSum:0,prSum:0,cnt:0}; });
+  data.forEach(s=>{
+    REGIONS.forEach(r=>{
+      const rd=s.regions[r];
+      if(rd&&rd.mu>0&&rd.payRate>0){
+        regData[r].muSum+=rd.mu; regData[r].prSum+=rd.payRate; regData[r].cnt++;
+      }
+    });
+  });
+
+  const svg = document.getElementById('chart-region-rates');
+  if(!svg) return;
+  const W=svg.parentElement.clientWidth||500;
+  const H=280; const pad={top:20,right:20,bottom:50,left:50};
+  const cW=W-pad.left-pad.right, cH=H-pad.top-pad.bottom;
+  const prVals=REGIONS.map(r=>regData[r].cnt?regData[r].prSum/regData[r].cnt:0);
+  const muVals=REGIONS.map(r=>regData[r].cnt?regData[r].muSum/regData[r].cnt:0);
+  const maxV=Math.max(...prVals)*1.1;
+  const n=REGIONS.length; const gW=cW/n; const bW=gW*0.35;
+
+  let html=`<svg id="chart-region-rates" width="100%" height="${H}"><g transform="translate(${pad.left},${pad.top})">`;
+  [0,.25,.5,.75,1].forEach(t=>{
+    const y=cH-t*cH;
+    html+=`<line x1="0" y1="${y}" x2="${cW}" y2="${y}" stroke="#EEE"/>`;
+    html+=`<text x="-4" y="${y+4}" text-anchor="end" font-size="9" fill="#888">$${(t*maxV).toFixed(0)}</text>`;
+  });
+  REGIONS.forEach((r,i)=>{
+    const x=i*gW;
+    const prH=(prVals[i]/maxV)*cH; const muH=(muVals[i]/maxV)*cH;
+    html+=`<rect x="${x+gW*.05}" y="${cH-prH}" width="${bW}" height="${prH}" fill="#1E88E5" rx="2" opacity=".8"/>`;
+    html+=`<rect x="${x+gW*.05+bW+2}" y="${cH-muH}" width="${bW}" height="${muH}" fill="#E65100" rx="2" opacity=".8"/>`;
+    const shortR=r.length>8?r.substring(0,7)+'…':r;
+    html+=`<text x="${x+gW/2}" y="${cH+14}" text-anchor="middle" font-size="10" fill="#555">${shortR}</text>`;
+  });
+  html+=`<line x1="0" y1="0" x2="0" y2="${cH}" stroke="#CCC"/><line x1="0" y1="${cH}" x2="${cW}" y2="${cH}" stroke="#CCC"/>`;
+
+  // legend
+  html+=`<rect x="${cW-120}" y="-18" width="10" height="10" fill="#1E88E5"/>`;
+  html+=`<text x="${cW-106}" y="-8" font-size="10" fill="#555">Avg Pay Rate</text>`;
+  html+=`<rect x="${cW-120}" y="-6" width="10" height="10" fill="#E65100"/>`;
+  html+=`<text x="${cW-106}" y="4" font-size="10" fill="#555">Avg MU ($)</text>`;
+
+  html+=`</g></svg>`;
+  svg.outerHTML=html;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TABLE SORT
+// ─────────────────────────────────────────────────────────────────────────────
+function sortTable(tableId, col){
+  const table = document.getElementById(tableId);
+  const tbody = table.querySelector('tbody');
+  const rows = Array.from(tbody.querySelectorAll('tr'));
+  const asc = table.dataset.sortCol==col && table.dataset.sortDir=='asc';
+  table.dataset.sortCol=col; table.dataset.sortDir=asc?'desc':'asc';
+  rows.sort((a,b)=>{
+    const av=a.cells[col]?.textContent.replace(/[^0-9.\-]/g,'')||'0';
+    const bv=b.cells[col]?.textContent.replace(/[^0-9.\-]/g,'')||'0';
+    const an=parseFloat(av), bn=parseFloat(bv);
+    if(!isNaN(an)&&!isNaN(bn)) return asc?an-bn:bn-an;
+    return asc?av.localeCompare(bv):bv.localeCompare(av);
+  });
+  rows.forEach(r=>tbody.appendChild(r));
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// INIT
+// ─────────────────────────────────────────────────────────────────────────────
+window.addEventListener('load', ()=>{
+  applyFilters();
+});
+</script>
+</body>
+</html>
