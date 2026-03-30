@@ -915,7 +915,7 @@ function buildHeatmap(){
 
   let html=`<thead><tr><th>Supplier</th>`;
   REGIONS.forEach(r=>html+=`<th>${r}</th>`);
-  html+=`<th>Avg MU</th></tr></thead><tbody>`;
+  html+=`<th>Total Spend</th></tr></thead><tbody>`;
 
   data.forEach(s=>{
     html+=`<tr><td class="supplier-name">${s.name}</td>`;
@@ -930,7 +930,7 @@ function buildHeatmap(){
         html+=`<td class="empty">—</td>`;
       }
     });
-    html+=`<td><strong>$${s.avgMu?s.avgMu.toFixed(2):'—'}</strong></td></tr>`;
+    html+=`<td><strong>${s.totalSpend?'$'+(s.totalSpend/1e6).toFixed(2)+'M':'—'}</strong></td></tr>`;
   });
   html+=`</tbody>`;
   document.getElementById('tbl-heatmap').innerHTML=html;
