@@ -335,8 +335,8 @@
 <!-- ══════════════════════════════════════════════════════════ REGIONAL INSIGHTS -->
 <div id="page-regional" class="page">
   <div class="card">
-    <div class="card-title">Regional MU Heatmap</div>
-    <div class="card-sub">Average Markup ($) by supplier × region. Darker blue = higher MU (more expensive). Grey = not active in that region.</div>
+    <div class="card-title">Regional Spend Heatmap</div>
+    <div class="card-sub">Spend ($) by supplier × region. Darker blue = higher spend concentration. Grey = not active in that region. Click "Total Spend" to sort.</div>
     <div class="tbl-wrap"><table class="heatmap-table" id="tbl-heatmap"></table></div>
   </div>
   <div class="two-col" style="margin-top:20px">
@@ -902,20 +902,20 @@ function buildHeatmap(sortDir){
   const f = getFilters();
   let data = filteredData().filter(s=>s.totalSpend>0);
   data = data.slice().sort((a,b)=> heatmapSortDir==='desc' ? b.totalSpend-a.totalSpend : a.totalSpend-b.totalSpend);
-  // gather all MU values for color scale
-  let allMU=[];
-  data.forEach(s=>REGIONS.forEach(r=>{ if(s.regions[r]&&s.regions[r].mu>0) allMU.push(s.regions[r].mu); }));
-  const muMin2=Math.min(...allMU), muMax3=Math.max(...allMU);
+  // gather all regional spend values for color scale
+  let allSpends=[];
+  data.forEach(s=>REGIONS.forEach(r=>{ if(s.regions[r]&&s.regions[r].spend>0) allSpends.push(s.regions[r].spend); }));
+  const spendMax=Math.max(...allSpends);
 
-  function muColor(mu){
-    if(mu==null||mu===0) return '#F5F5F5';
-    const t=(mu-muMin2)/(muMax3-muMin2);
-    const r=Math.round(13+(210-13)*t), g=Math.round(71+(237-71)*(1-t)), b=Math.round(161+(248-161)*(1-t));
-    // low = light green, high = dark red
-    if(t<0.33) return `hsl(207,${Math.round(50+t*50)}%,${Math.round(85-t*30)}%)`;
-    if(t<0.66) return `hsl(${Math.round(207-t*150)},60%,${Math.round(70-t*20)}%)`;
-    return `hsl(${Math.round(40-t*40)},80%,${Math.round(55-t*20)}%)`;
+  function spendColor(spend){
+    if(!spend||spend<=0) return '#F5F5F5';
+    const t=Math.sqrt(spend/spendMax); // sqrt scale so small values still show colour
+    if(t<0.25) return `hsl(207,50%,${Math.round(92-t*40)}%)`;
+    if(t<0.60) return `hsl(207,${Math.round(55+t*30)}%,${Math.round(78-t*35)}%)`;
+    return `hsl(213,${Math.round(70+t*20)}%,${Math.round(45-t*20)}%)`;
   }
+
+  const fmtSpendCell = v => v>=1e6 ? '$'+(v/1e6).toFixed(2)+'M' : '$'+(v/1e3).toFixed(0)+'K';
 
   const arrow = heatmapSortDir==='desc' ? ' ↓' : ' ↑';
   let html=`<thead><tr><th>Supplier</th>`;
@@ -926,10 +926,10 @@ function buildHeatmap(sortDir){
     html+=`<tr><td class="supplier-name">${s.name}</td>`;
     REGIONS.forEach(r=>{
       const rd=s.regions[r];
-      if(rd&&rd.mu!=null){
-        const bg=muColor(rd.mu);
-        const txt=rd.mu===0?'$0 DirBill':'$'+rd.mu.toFixed(2);
-        const tc=rd.mu>10?'#fff':'#333';
+      if(rd&&rd.spend!=null){
+        const bg=spendColor(rd.spend);
+        const txt=rd.spend>0?fmtSpendCell(rd.spend):'$0';
+        const tc=rd.spend/spendMax>0.4?'#fff':'#333';
         html+=`<td style="background:${bg};color:${tc}">${txt}</td>`;
       } else {
         html+=`<td class="empty">—</td>`;
