@@ -1148,22 +1148,22 @@ function buildCrossChart(){
   const wrap = document.getElementById('cross-chart-wrap');
   if(!wrap) return;
 
-  // Hardcoded from YTD analysis: {cnt, br, nm (supplier-level)}
+  // cnt = assignments, br = avg bill rate, spend = proportional spend estimate ($)
   const rows = [
-    {name:'TalentBurst, Inc.',       lab:{cnt:242,br:29.93}, field:{cnt:490,br:27.18}, bo:{cnt:74,br:44.47},  nm:22.0},
-    {name:'Integrated Resources',    lab:{cnt:53, br:35.92}, field:{cnt:226,br:30.52}, bo:{cnt:0},             nm:35.7},
-    {name:'Spectraforce Technologies',lab:{cnt:47,br:29.72}, field:{cnt:169,br:30.27}, bo:{cnt:0},             nm:27.5},
-    {name:'Synectics',               lab:{cnt:61, br:40.00}, field:{cnt:143,br:29.23}, bo:{cnt:0},             nm:22.9},
-    {name:'All Medical Personnel',   lab:{cnt:0},            field:{cnt:118,br:28.52}, bo:{cnt:0},             nm:31.7},
-    {name:'BayOne Solutions',        lab:{cnt:18, br:34.50}, field:{cnt:108,br:32.16}, bo:{cnt:0},             nm:22.8},
-    {name:'Mindlance, Inc',          lab:{cnt:29, br:38.57}, field:{cnt:100,br:30.18}, bo:{cnt:6, br:28.20},   nm:28.7},
-    {name:'Iconma LLC',              lab:{cnt:27, br:40.37}, field:{cnt:95, br:30.75}, bo:{cnt:5, br:42.72},   nm:29.1},
-    {name:'Rangam Consultants',      lab:{cnt:0},            field:{cnt:91, br:29.73}, bo:{cnt:0},             nm:34.7},
-    {name:'Pinnacle',                lab:{cnt:27, br:32.92}, field:{cnt:73, br:32.01}, bo:{cnt:0},             nm:17.4},
-    {name:'Pride Global Healthcare', lab:{cnt:37, br:44.06}, field:{cnt:70, br:30.71}, bo:{cnt:5, br:30.38},   nm:29.5},
-    {name:'Global Technical Talent', lab:{cnt:0},            field:{cnt:74, br:35.30}, bo:{cnt:0},             nm:19.5},
-    {name:'HCL Technologies',        lab:{cnt:0},            field:{cnt:0},            bo:{cnt:41, br:57.28},   nm:null},
-    {name:'Triage, LLC',             lab:{cnt:35, br:89.00}, field:{cnt:0},            bo:{cnt:0},             nm:3.6},
+    {name:'TalentBurst, Inc.',        lab:{cnt:242,br:29.93,spend:3176844},  field:{cnt:490,br:27.18,spend:6432453}, bo:{cnt:74, br:44.47,spend:971432},  nm:22.0},
+    {name:'Integrated Resources',     lab:{cnt:53, br:35.92,spend:640280},   field:{cnt:226,br:30.52,spend:2730250}, bo:{cnt:0},                           nm:35.7},
+    {name:'Spectraforce Technologies', lab:{cnt:47,br:29.72,spend:501326},   field:{cnt:169,br:30.27,spend:1802639}, bo:{cnt:0},                           nm:27.5},
+    {name:'Synectics',                lab:{cnt:61, br:40.00,spend:759187},   field:{cnt:143,br:29.23,spend:1779735}, bo:{cnt:0},                           nm:22.9},
+    {name:'All Medical Personnel',    lab:{cnt:0},                            field:{cnt:118,br:28.52,spend:1252507}, bo:{cnt:0},                           nm:31.7},
+    {name:'BayOne Solutions',         lab:{cnt:18, br:34.50,spend:246491},   field:{cnt:108,br:32.16,spend:1478944}, bo:{cnt:0},                           nm:22.8},
+    {name:'Mindlance, Inc',           lab:{cnt:29, br:38.57,spend:374808},   field:{cnt:100,br:30.18,spend:1292441}, bo:{cnt:6, br:28.20,spend:77546},     nm:28.7},
+    {name:'Iconma LLC',               lab:{cnt:27, br:40.37,spend:284439},   field:{cnt:95, br:30.75,spend:1000806}, bo:{cnt:5, br:42.72,spend:52674},     nm:29.1},
+    {name:'Rangam Consultants',       lab:{cnt:0},                            field:{cnt:91, br:29.73,spend:1032247}, bo:{cnt:0},                           nm:34.7},
+    {name:'Pinnacle',                 lab:{cnt:27, br:32.92,spend:313929},   field:{cnt:73, br:32.01,spend:848772},  bo:{cnt:0},                           nm:17.4},
+    {name:'Pride Global Healthcare',  lab:{cnt:37, br:44.06,spend:219931},   field:{cnt:70, br:30.71,spend:416086},  bo:{cnt:5, br:30.38,spend:29720},     nm:29.5},
+    {name:'Global Technical Talent',  lab:{cnt:0},                            field:{cnt:74, br:35.30,spend:1126216}, bo:{cnt:0},                           nm:19.5},
+    {name:'HCL Technologies',         lab:{cnt:0},                            field:{cnt:0},                          bo:{cnt:41, br:57.28,spend:0},         nm:null},
+    {name:'Triage, LLC',              lab:{cnt:35, br:89.00,spend:1554758},  field:{cnt:0},                          bo:{cnt:0},                           nm:3.6},
   ];
 
   const cats = ['Laboratory','Field','Back Office'];
@@ -1215,9 +1215,9 @@ function buildCrossChart(){
         svg+=`<text x="${cx}" y="${cy+4}" text-anchor="middle" font-size="9" fill="#90A4AE">—</text>`;
       } else {
         const radius = scaleR(d.cnt);
+        const spendLbl = d.spend>=1e6 ? '$'+(d.spend/1e6).toFixed(1)+'M' : d.spend>=1000 ? '$'+Math.round(d.spend/1000)+'K' : d.spend>0 ? '$'+d.spend : '—';
         svg+=`<circle cx="${cx}" cy="${cy}" r="${radius}" fill="${nmColor(r.nm)}" opacity=".85"/>`;
-        svg+=`<text x="${cx}" y="${cy-3}" text-anchor="middle" font-size="${radius>20?11:9}" fill="#fff" font-weight="700">${d.cnt}</text>`;
-        svg+=`<text x="${cx}" y="${cy+10}" text-anchor="middle" font-size="9" fill="#fff">$${d.br.toFixed(0)}</text>`;
+        svg+=`<text x="${cx}" y="${cy+2}" text-anchor="middle" font-size="${radius>22?11:9}" fill="#fff" font-weight="700">${spendLbl}</text>`;
       }
     });
     // Divider
