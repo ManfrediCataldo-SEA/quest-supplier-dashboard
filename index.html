@@ -1222,8 +1222,10 @@ function buildCrossChart(){
         const spendLbl = d.spend>=1e6 ? '$'+(d.spend/1e6).toFixed(1)+'M'
                         : d.spend>=1000 ? '$'+Math.round(d.spend/1000)+'K'
                         : d.spend>0 ? '$'+d.spend : '—';
+        const brLbl = '$'+d.br.toFixed(0)+' BR';
         svg+=`<circle cx="${cx}" cy="${cy}" r="${radius}" fill="${nmColor(r.nm)}" opacity=".85"/>`;
-        svg+=`<text x="${cx}" y="${cy+3}" text-anchor="middle" font-size="${radius>22?11:9}" fill="#fff" font-weight="700">${spendLbl}</text>`;
+        svg+=`<text x="${cx}" y="${cy-2}" text-anchor="middle" font-size="${radius>22?11:9}" fill="#fff" font-weight="700">${spendLbl}</text>`;
+        svg+=`<text x="${cx}" y="${cy+10}" text-anchor="middle" font-size="8" fill="rgba(255,255,255,.85)">${brLbl}</text>`;
       }
     });
   });
