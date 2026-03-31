@@ -988,6 +988,8 @@ function buildPerfTable(){
   });
   data.sort((a,b)=>b.valueScore-a.valueScore);
   const filterNote = (pf.region!=='All'||pf.rolecat!=='All') ? ' <span style="color:#1565C0;font-size:10px">● filtered</span>' : '';
+  const totalSpend = data.reduce((sum,s)=>sum+s.totalSpend,0);
+  const supplierCount = data.length;
   let rows='';
   data.forEach((s,i)=>{
     rows+=`<tr>
@@ -1000,6 +1002,14 @@ function buildPerfTable(){
       <td>${getQuadrant(s.dispBr,s.pctNotMeeting)}</td>
     </tr>`;
   });
+  rows+=`<tr style="background:#F1F5F9;font-weight:700;border-top:2px solid #94A3B8">
+    <td colspan="3" style="text-align:right;color:#334155;font-size:13px">
+      ${isFiltered?`<span style="color:#1565C0;font-size:11px">● Filtered — </span>`:''}${supplierCount} supplier${supplierCount!==1?'s':''}
+    </td>
+    <td></td>
+    <td style="color:#0F172A;font-size:14px;white-space:nowrap">${fmt$(totalSpend)}</td>
+    <td colspan="2" style="color:#64748B;font-size:11px">Total Spend</td>
+  </tr>`;
   document.getElementById('tbl-perf-body').innerHTML=rows;
 }
 
