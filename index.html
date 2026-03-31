@@ -330,6 +330,12 @@
       </div>
     </div>
   </div>
+
+  <div class="card">
+    <div class="card-title">Supplier Comparison — Bill Rate vs % Not Meeting Expectations</div>
+    <div class="card-sub">Suppliers sorted by total spend (largest first). Each row shows two bars: <span style="color:#1565C0;font-weight:600">■ Avg Bill Rate ($)</span> and <span style="color:#D32F2F;font-weight:600">■ % Not Meeting</span>. Longer red bar + longer blue bar = worst value.</div>
+    <div class="chart-wrap"><svg id="chart-perf-bars" width="100%" height="60"></svg></div>
+  </div>
 </div>
 
 <!-- ══════════════════════════════════════════════════════════ REGIONAL INSIGHTS -->
@@ -501,6 +507,7 @@ function applyFilters(){
   buildRegionCountChart();
   buildScatter();
   buildPerfTable();
+  buildPerfBars();
   buildHeatmap();
   buildRegionPerfChart();
   buildRegionRatesChart();
@@ -895,6 +902,69 @@ function buildPerfTable(){
 // ─────────────────────────────────────────────────────────────────────────────
 // HEATMAP
 // ─────────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// PERF BARS CHART
+// ─────────────────────────────────────────────────────────────────────────────
+function buildPerfBars(){
+  const svg = document.getElementById('chart-perf-bars');
+  if(!svg) return;
+
+  const data = filteredData()
+    .filter(s=>s.totalSpend>0 && s.avgBr!=null && s.pctNotMeeting!=null)
+    .sort((a,b)=>b.totalSpend-a.totalSpend);
+
+  const ROW = 28, LABEL = 180, BAR_AREA = 420, GAP = 6, INNER = 12;
+  const H = data.length * ROW + 40;
+  const W = svg.parentElement.clientWidth || 700;
+  const barScale = Math.min(BAR_AREA, W - LABEL - 20);
+
+  const brMax = Math.max(...data.map(s=>s.avgBr));
+  const nmMax = Math.max(...data.map(s=>s.pctNotMeeting));
+
+  let html = `<svg id="chart-perf-bars" width="100%" height="${H}">`;
+
+  // Column headers
+  html += `<text x="${LABEL}" y="14" font-size="10" fill="#1565C0" font-weight="600">Bill Rate ($) →</text>`;
+  html += `<text x="${LABEL + barScale/2 + GAP}" y="14" font-size="10" fill="#D32F2F" font-weight="600">% Not Meeting →</text>`;
+  // divider line between two bar groups
+  html += `<line x1="${LABEL + barScale/2 + GAP - 4}" y1="0" x2="${LABEL + barScale/2 + GAP - 4}" y2="${H}" stroke="#EEE" stroke-width="1"/>`;
+
+  data.forEach((s, i) => {
+    const y = i * ROW + 20;
+    const shortName = s.name.length > 26 ? s.name.substring(0,25)+'…' : s.name;
+
+    // quadrant color for the label dot
+    const hiBR = s.avgBr > 31, hiNM = s.pctNotMeeting > 25;
+    const dotColor = (!hiBR&&!hiNM)?'#2E7D32': (hiBR&&!hiNM)?'#E65100': (!hiBR&&hiNM)?'#1565C0':'#D32F2F';
+
+    // row background (alternate)
+    if(i%2===0) html += `<rect x="0" y="${y-2}" width="${W}" height="${ROW}" fill="#F9FAFB" rx="0"/>`;
+
+    // supplier label
+    html += `<circle cx="8" cy="${y+INNER/2}" r="4" fill="${dotColor}"/>`;
+    html += `<text x="16" y="${y+INNER/2+4}" font-size="11" fill="#333">${shortName}</text>`;
+
+    // Bill Rate bar (left half)
+    const brW = (s.avgBr / brMax) * (barScale/2 - GAP);
+    html += `<rect x="${LABEL}" y="${y}" width="${brW}" height="${INNER}" fill="#1565C0" rx="2" opacity=".75"/>`;
+    html += `<text x="${LABEL + brW + 3}" y="${y+INNER-1}" font-size="9" fill="#1565C0">$${s.avgBr.toFixed(1)}</text>`;
+
+    // % Not Meeting bar (right half)
+    const nmW = (s.pctNotMeeting / nmMax) * (barScale/2 - GAP);
+    const nmColor = s.pctNotMeeting <= 20 ? '#2E7D32' : s.pctNotMeeting <= 35 ? '#F9A825' : '#D32F2F';
+    const nmX = LABEL + barScale/2 + GAP;
+    html += `<rect x="${nmX}" y="${y}" width="${nmW}" height="${INNER}" fill="${nmColor}" rx="2" opacity=".8"/>`;
+    html += `<text x="${nmX + nmW + 3}" y="${y+INNER-1}" font-size="9" fill="${nmColor}">${s.pctNotMeeting.toFixed(1)}%</text>`;
+
+    // spend label on far right
+    const spendLbl = s.totalSpend>=1e6 ? '$'+(s.totalSpend/1e6).toFixed(1)+'M' : '$'+(s.totalSpend/1e3).toFixed(0)+'K';
+    html += `<text x="${W-4}" y="${y+INNER-1}" text-anchor="end" font-size="9" fill="#999">${spendLbl}</text>`;
+  });
+
+  html += `</svg>`;
+  svg.outerHTML = html;
+}
+
 let heatmapSortDir = 'desc';
 
 function buildHeatmap(sortDir){
