@@ -157,6 +157,16 @@
         <option>Workforce Health Solutions</option>
       </select>
   <span class="filter-sep">|</span>
+  <label>Role Category:</label>
+  <select id="filterRole" onchange="applyFilters()">
+    <option value="All">All Categories</option>
+    <option>Back office</option>
+    <option>Field</option>
+    <option>IT</option>
+    <option>Laboratory</option>
+    <option>Other</option>
+  </select>
+  <span class="filter-sep">|</span>
   <label>Supplier:</label>
   <select id="filterSupplier" onchange="applyFilters()">
     <option value="All">All Suppliers</option>
@@ -627,19 +637,87 @@ RAW.forEach(s=>{ const o=document.createElement('option'); o.value=o.text=s.name
 function getFilters(){
   return {
     region:   document.getElementById('filterRegion').value,
+    rolecat:  document.getElementById('filterRole').value,
     supplier: document.getElementById('filterSupplier').value,
     minSpend: parseFloat(document.getElementById('filterSpend').value)||0
   };
 }
 
+// Builds a per-supplier, per-region breakdown for a given role category from YTD data
+function buildRoleRegionMap(rolecat){
+  const supRegTotal = {}, supRegRole = {};
+  YTD.forEach(d=>{
+    if(!supRegTotal[d.s]) supRegTotal[d.s]={};
+    supRegTotal[d.s][d.r] = (supRegTotal[d.s][d.r]||0) + d.n;
+    if(d.rc !== rolecat) return;
+    if(!supRegRole[d.s]) supRegRole[d.s]={};
+    if(!supRegRole[d.s][d.r]) supRegRole[d.s][d.r]={cnt:0,brSum:0,prSum:0,muSum:0};
+    const v = supRegRole[d.s][d.r];
+    v.cnt += d.n;
+    if(d.br) v.brSum += d.br*d.n;
+    if(d.pr) v.prSum += d.pr*d.n;
+    if(d.mu) v.muSum += d.mu*d.n;
+  });
+  // Overall per-supplier totals for the role
+  const supTotal = {}, supRole = {};
+  YTD.forEach(d=>{
+    supTotal[d.s] = (supTotal[d.s]||0) + d.n;
+    if(d.rc !== rolecat) return;
+    if(!supRole[d.s]) supRole[d.s]={cnt:0,brSum:0,prSum:0,muSum:0};
+    const v = supRole[d.s];
+    v.cnt += d.n;
+    if(d.br) v.brSum += d.br*d.n;
+    if(d.pr) v.prSum += d.pr*d.n;
+    if(d.mu) v.muSum += d.mu*d.n;
+  });
+  return {supRegTotal, supRegRole, supTotal, supRole};
+}
+
 function filteredData(){
   const f = getFilters();
-  return RAW.filter(s=>{
+  let data = RAW.filter(s=>{
     if(f.supplier !== 'All' && s.name !== f.supplier) return false;
     if((s.totalSpend||0) < f.minSpend) return false;
     if(f.region !== 'All' && !s.regions[f.region]) return false;
     return true;
   });
+
+  if(f.rolecat !== 'All'){
+    const {supRegTotal, supRegRole, supTotal, supRole} = buildRoleRegionMap(f.rolecat);
+    data = data.map(s=>{
+      const sr = supRole[s.name];
+      if(!sr || sr.cnt === 0) return null; // supplier not active in this role
+      const totCnt = supTotal[s.name] || 1;
+      // Adjusted regional breakdown
+      const adjRegions = {};
+      let adjTotalSpend = 0;
+      for(const [reg, rv] of Object.entries(s.regions)){
+        const rm = supRegRole[s.name]?.[reg];
+        if(!rm || rm.cnt === 0) continue;
+        const regTotal = supRegTotal[s.name]?.[reg] || 1;
+        const prop = rm.cnt / regTotal;
+        const adjSpend = rv.spend * prop;
+        adjRegions[reg] = {
+          payRate:  rm.cnt>0 ? Math.round(rm.prSum/rm.cnt*100)/100 : rv.payRate,
+          mu:       rm.cnt>0 ? Math.round(rm.muSum/rm.cnt*100)/100 : rv.mu,
+          billRate: rm.cnt>0 ? Math.round(rm.brSum/rm.cnt*100)/100 : rv.billRate,
+          spend:    adjSpend
+        };
+        adjTotalSpend += adjSpend;
+      }
+      if(adjTotalSpend === 0) return null;
+      return {
+        ...s,
+        avgBr:      Math.round(sr.brSum/sr.cnt*100)/100,
+        avgPr:      Math.round(sr.prSum/sr.cnt*100)/100,
+        avgMu:      Math.round(sr.muSum/sr.cnt*100)/100,
+        totalSpend: adjTotalSpend,
+        regions:    adjRegions
+      };
+    }).filter(s=>s && s.totalSpend>0);
+  }
+
+  return data;
 }
 
 function applyFilters(){
