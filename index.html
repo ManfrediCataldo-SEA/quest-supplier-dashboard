@@ -830,6 +830,7 @@ function getPerfFilters(){
   return { region: r?r.value:'All', rolecat: rc?rc.value:'All' };
 }
 function ytdBrBySupplier(region, rolecat){
+  // Filtered counts & rates
   const map = {};
   YTD.forEach(d=>{
     if(region!=='All' && d.r!==region) return;
@@ -839,12 +840,30 @@ function ytdBrBySupplier(region, rolecat){
     if(d.pr!=null) map[d.s].prSum+=d.pr*d.n;
     if(d.mu!=null) map[d.s].muSum+=d.mu*d.n;
   });
+  // Total counts per supplier (for proportional spend estimate when role filter active)
+  const totMap = {};
+  YTD.forEach(d=>{
+    if(!totMap[d.s]) totMap[d.s]=0;
+    totMap[d.s]+=d.n;
+  });
+  // Regional counts per supplier (for region+role proportional spend)
+  const regMap = {};
+  if(region!=='All'){
+    YTD.forEach(d=>{
+      if(d.r!==region) return;
+      if(!regMap[d.s]) regMap[d.s]=0;
+      regMap[d.s]+=d.n;
+    });
+  }
   const out={};
   for(const [name,v] of Object.entries(map)){
     if(v.cnt>0) out[name]={
-      avgBr:Math.round(v.brSum/v.cnt*100)/100,
-      avgPr:Math.round(v.prSum/v.cnt*100)/100,
-      avgMu:Math.round(v.muSum/v.cnt*100)/100
+      avgBr: Math.round(v.brSum/v.cnt*100)/100,
+      avgPr: Math.round(v.prSum/v.cnt*100)/100,
+      avgMu: Math.round(v.muSum/v.cnt*100)/100,
+      filteredCnt: v.cnt,
+      totalCnt: totMap[name]||1,
+      regionCnt: region!=='All' ? (regMap[name]||1) : (totMap[name]||1)
     };
   }
   return out;
@@ -977,9 +996,24 @@ function buildPerfTable(){
   const ytdMap = isFiltered ? ytdBrBySupplier(pf.region,pf.rolecat) : null;
   const data = filteredData().filter(s=>s.totalSpend>0 && s.pctNotMeeting!=null).map(s=>{
     const y = ytdMap ? ytdMap[s.name] : null;
-    // When a filter is active, only keep suppliers present in YTD filtered data
     if(isFiltered && !y) return null;
-    return {...s, dispBr:y?y.avgBr:s.avgBr, dispPr:y?y.avgPr:s.avgPr, dispMu:y?y.avgMu:s.avgMu};
+
+    // Spend calculation:
+    // - No filter: full totalSpend from Cursor sheet
+    // - Region only: exact regional spend from Cursor sheet
+    // - Role filter active: proportional estimate via YTD assignment counts
+    let dispSpend = s.totalSpend;
+    if(y){
+      if(pf.rolecat!=='All'){
+        // Proportional: filteredCnt / regionCnt * regionSpend (or totalSpend if no region)
+        const regionSpend = pf.region!=='All' ? (s.regions[pf.region]?.spend||s.totalSpend) : s.totalSpend;
+        dispSpend = regionSpend * (y.filteredCnt / y.regionCnt);
+      } else if(pf.region!=='All'){
+        // Region only: exact spend
+        dispSpend = s.regions[pf.region]?.spend || s.totalSpend;
+      }
+    }
+    return {...s, dispBr:y?y.avgBr:s.avgBr, dispPr:y?y.avgPr:s.avgPr, dispMu:y?y.avgMu:s.avgMu, dispSpend};
   }).filter(s=>s && s.dispBr!=null);
   const brMax2 = Math.max(...data.map(s=>s.dispBr));
   const nmMax2 = Math.max(...data.map(s=>s.pctNotMeeting));
@@ -988,16 +1022,18 @@ function buildPerfTable(){
   });
   data.sort((a,b)=>b.valueScore-a.valueScore);
   const filterNote = (pf.region!=='All'||pf.rolecat!=='All') ? ' <span style="color:#1565C0;font-size:10px">● filtered</span>' : '';
-  const totalSpend = data.reduce((sum,s)=>sum+s.totalSpend,0);
+  const totalSpend = data.reduce((sum,s)=>sum+(s.dispSpend||s.totalSpend),0);
   const supplierCount = data.length;
+  const spendLabel = isFiltered ? (pf.rolecat!=='All' ? '~est. spend' : 'Total Spend') : 'Total Spend';
   let rows='';
   data.forEach((s,i)=>{
+    const spendVal = s.dispSpend!=null ? s.dispSpend : s.totalSpend;
     rows+=`<tr>
       <td>${i+1}</td>
       <td>${s.name}</td>
       <td>$${fmtN(s.dispBr)}${filterNote} <span style="color:#888;font-size:11px">(PR $${fmtN(s.dispPr)} + MU $${fmtN(s.dispMu)})</span></td>
       <td><span class="pill ${getPillClass(s.pctNotMeeting)}">${fmtPct(s.pctNotMeeting)}</span></td>
-      <td>${fmt$(s.totalSpend)}</td>
+      <td>${fmt$(spendVal)}</td>
       <td><strong>${s.valueScore.toFixed(1)}</strong></td>
       <td>${getQuadrant(s.dispBr,s.pctNotMeeting)}</td>
     </tr>`;
@@ -1008,7 +1044,7 @@ function buildPerfTable(){
     </td>
     <td></td>
     <td style="color:#0F172A;font-size:14px;white-space:nowrap">${fmt$(totalSpend)}</td>
-    <td colspan="2" style="color:#64748B;font-size:11px">Total Spend</td>
+    <td colspan="2" style="color:#64748B;font-size:11px">${spendLabel}</td>
   </tr>`;
   document.getElementById('tbl-perf-body').innerHTML=rows;
 }
