@@ -838,11 +838,13 @@ function buildScatter(){
   const svg = document.getElementById('chart-scatter');
   if(!svg) return;
   const pf = getPerfFilters();
-  const ytdMap = (pf.region!=='All'||pf.rolecat!=='All') ? ytdBrBySupplier(pf.region,pf.rolecat) : null;
+  const isFiltered = pf.region!=='All' || pf.rolecat!=='All';
+  const ytdMap = isFiltered ? ytdBrBySupplier(pf.region,pf.rolecat) : null;
   const data = filteredData().filter(s=>s.totalSpend>0 && s.pctNotMeeting!=null).map(s=>{
     const y = ytdMap ? ytdMap[s.name] : null;
+    if(isFiltered && !y) return null;
     return {...s, dispBr:y?y.avgBr:s.avgBr, dispPr:y?y.avgPr:s.avgPr, dispMu:y?y.avgMu:s.avgMu};
-  }).filter(s=>s.dispBr!=null);
+  }).filter(s=>s && s.dispBr!=null);
   const W = svg.parentElement.clientWidth || 700;
   const H = 460; const pad={top:30,right:30,bottom:60,left:60};
   const cW=W-pad.left-pad.right, cH=H-pad.top-pad.bottom;
@@ -863,18 +865,19 @@ function buildScatter(){
 
   let html=`<svg id="chart-scatter" width="100%" height="${H}"><g transform="translate(${pad.left},${pad.top})">`;
 
-  // Quadrant shading
+  // Quadrant shading — y increases downward, so low % not-meeting = large cy = bottom
   const mx=brMid/brMax*cW, my=nmMid/nmMax*cH;
-  html+=`<rect x="0" y="0" width="${mx}" height="${cH-my}" fill="#E8F5E9" opacity=".5"/>`;
-  html+=`<rect x="${mx}" y="0" width="${cW-mx}" height="${cH-my}" fill="#FFF8E1" opacity=".5"/>`;
-  html+=`<rect x="0" y="${cH-my}" width="${mx}" height="${my}" fill="#E3F2FD" opacity=".5"/>`;
-  html+=`<rect x="${mx}" y="${cH-my}" width="${cW-mx}" height="${my}" fill="#FFEBEE" opacity=".5"/>`;
+  // top half = high % not-meeting (bad), bottom half = low % not-meeting (good)
+  html+=`<rect x="0"   y="0"      width="${mx}"    height="${cH-my}" fill="#E3F2FD" opacity=".5"/>`;  // top-left:    low BR,  high NM = LOW COST / PERF RISK
+  html+=`<rect x="${mx}" y="0"    width="${cW-mx}" height="${cH-my}" fill="#FFEBEE" opacity=".5"/>`;  // top-right:   high BR, high NM = UNDERPERFORMING
+  html+=`<rect x="0"   y="${cH-my}" width="${mx}"    height="${my}"  fill="#E8F5E9" opacity=".5"/>`;  // bottom-left: low BR,  low NM  = BEST VALUE
+  html+=`<rect x="${mx}" y="${cH-my}" width="${cW-mx}" height="${my}" fill="#FFF8E1" opacity=".5"/>`;  // bottom-right:high BR, low NM  = PRICEY / RELIABLE
 
   // Quadrant labels
-  html+=`<text x="4" y="14" font-size="9" fill="#2E7D32" font-weight="600">BEST VALUE</text>`;
-  html+=`<text x="${cW-4}" y="14" text-anchor="end" font-size="9" fill="#E65100" font-weight="600">PRICEY / RELIABLE</text>`;
-  html+=`<text x="4" y="${cH-4}" font-size="9" fill="#1565C0" font-weight="600">LOW COST / PERF RISK</text>`;
-  html+=`<text x="${cW-4}" y="${cH-4}" text-anchor="end" font-size="9" fill="#D32F2F" font-weight="600">UNDERPERFORMING</text>`;
+  html+=`<text x="4" y="14" font-size="9" fill="#1565C0" font-weight="600">LOW COST / PERF RISK</text>`;
+  html+=`<text x="${cW-4}" y="14" text-anchor="end" font-size="9" fill="#D32F2F" font-weight="600">UNDERPERFORMING</text>`;
+  html+=`<text x="4" y="${cH-4}" font-size="9" fill="#2E7D32" font-weight="600">BEST VALUE ★</text>`;
+  html+=`<text x="${cW-4}" y="${cH-4}" text-anchor="end" font-size="9" fill="#E65100" font-weight="600">PRICEY / RELIABLE</text>`;
 
   // Midlines
   html+=`<line x1="${mx}" y1="0" x2="${mx}" y2="${cH}" stroke="#999" stroke-width="1" stroke-dasharray="4"/>`;
@@ -907,6 +910,8 @@ function buildScatter(){
 
   html+=`<line x1="0" y1="0" x2="0" y2="${cH}" stroke="#CCC"/><line x1="0" y1="${cH}" x2="${cW}" y2="${cH}" stroke="#CCC"/>`;
   html+=`<text x="${cW/2}" y="${cH+30}" text-anchor="middle" font-size="11" fill="#555">Average Bill Rate (Pay Rate + MU)</text>`;
+  html+=`<text x="-46" y="${cH/2}" text-anchor="middle" font-size="9" fill="#999" transform="rotate(-90,-46,${cH/2})">↑ worse</text>`;
+  html+=`<text x="-46" y="${cH/2+30}" text-anchor="middle" font-size="9" fill="#2E7D32" transform="rotate(-90,-46,${cH/2+30})">↓ better</text>`;
   html+=`<text transform="rotate(-90)" x="${-cH/2}" y="-44" text-anchor="middle" font-size="11" fill="#555">% Not Meeting Expectations</text>`;
   html+=`</g></svg>`;
   svg.outerHTML=html;
@@ -926,11 +931,14 @@ function hideTip(){ document.getElementById('tooltip').style.display='none'; }
 // ─────────────────────────────────────────────────────────────────────────────
 function buildPerfTable(){
   const pf = getPerfFilters();
-  const ytdMap = (pf.region!=='All'||pf.rolecat!=='All') ? ytdBrBySupplier(pf.region,pf.rolecat) : null;
+  const isFiltered = pf.region!=='All' || pf.rolecat!=='All';
+  const ytdMap = isFiltered ? ytdBrBySupplier(pf.region,pf.rolecat) : null;
   const data = filteredData().filter(s=>s.totalSpend>0 && s.pctNotMeeting!=null).map(s=>{
     const y = ytdMap ? ytdMap[s.name] : null;
+    // When a filter is active, only keep suppliers present in YTD filtered data
+    if(isFiltered && !y) return null;
     return {...s, dispBr:y?y.avgBr:s.avgBr, dispPr:y?y.avgPr:s.avgPr, dispMu:y?y.avgMu:s.avgMu};
-  }).filter(s=>s.dispBr!=null);
+  }).filter(s=>s && s.dispBr!=null);
   const brMax2 = Math.max(...data.map(s=>s.dispBr));
   const nmMax2 = Math.max(...data.map(s=>s.pctNotMeeting));
   data.forEach(s=>{
