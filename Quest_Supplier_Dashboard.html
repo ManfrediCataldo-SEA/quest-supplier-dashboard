@@ -1043,25 +1043,22 @@ function buildCompTable(){
 // ─────────────────────────────────────────────────────────────────────────────
 function buildMuRegionTable(){
   const f = getFilters();
+  const KEY_REGIONS = ['East','Great Midwest','North','SouthEast','SouthWest','West'];
 
-  // Apply supplier / minSpend / role filters — but NOT region filter (we show all regions)
+  // Apply supplier / minSpend filters — NOT region filter (cross-region view)
   let data = RAW.filter(s=>{
     if(f.supplier !== 'All' && s.name !== f.supplier) return false;
     if((s.totalSpend||0) < f.minSpend) return false;
-    return true;
-  }).filter(s=>s.totalSpend>0);
+    return s.totalSpend > 0;
+  });
 
-  // Role filter: adjust spend & rates
+  // Role filter: adjust total spend
   if(f.rolecat !== 'All'){
-    const rateMap = buildRoleRateMap(f.rolecat);
     data = data.map(s=>{
       const adjSpend = s.roleSpend?.[f.rolecat] || 0;
-      if(adjSpend <= 0) return null;
-      const rates = rateMap[s.name];
-      return {...s, totalSpend: adjSpend, avgMuPct: rates?.avgMuPct ?? s.avgMuPct};
+      return adjSpend > 0 ? {...s, totalSpend: adjSpend} : null;
     }).filter(Boolean);
   }
-
   data.sort((a,b)=>b.totalSpend-a.totalSpend);
 
   if(!data.length){
@@ -1070,95 +1067,111 @@ function buildMuRegionTable(){
     return;
   }
 
-  // Only show the 6 key regions (in a fixed, logical order)
-  const KEY_REGIONS = ['East','Great Midwest','North','SouthEast','SouthWest','West'];
-  const regions = KEY_REGIONS;
+  // ── Build per-supplier × region stats from YTD (column K = MU rate %) ──────
+  // This gives the true average MU% (excluding direct-bill 0% rows) per region
+  const ytdStats = {}; // key: "sup|||reg" → {muPctSum, muPctCnt, muDolSum, muDolCnt, totalN}
+  YTD.forEach(d=>{
+    if(f.rolecat !== 'All' && d.rc !== f.rolecat) return;
+    const k = d.s + '|||' + d.r;
+    if(!ytdStats[k]) ytdStats[k] = {muPctSum:0,muPctCnt:0,muDolSum:0,muDolCnt:0,totalN:0};
+    const v = ytdStats[k];
+    v.totalN += d.n;
+    if(d.muPct != null && d.muPct > 0){ v.muPctSum += d.muPct * d.n; v.muPctCnt += d.n; }
+    if(d.mu   != null && d.mu   > 0){ v.muDolSum += d.mu   * d.n; v.muDolCnt += d.n; }
+  });
 
-  // Per-supplier × region stats
-  // muPct = mu / payRate (fraction → stored as %)
+  // ── Populate matrix: only KEY_REGIONS ────────────────────────────────────────
   const muMatrix = {};
   data.forEach(s=>{
     muMatrix[s.name] = {};
-    for(const [reg, rd] of Object.entries(s.regions)){
-      if(rd.payRate > 0 && rd.billRate > rd.payRate){
-        muMatrix[s.name][reg] = {
-          muPct:    rd.mu / rd.payRate * 100,
-          muDollar: rd.mu,
-          spend:    rd.spend,
-          payRate:  rd.payRate,
-          billRate: rd.billRate
-        };
-      }
-    }
+    KEY_REGIONS.forEach(reg=>{
+      const k  = s.name + '|||' + reg;
+      const v  = ytdStats[k];
+      const rd = s.regions[reg];
+      if(!v && !rd) return;
+      const muPct    = v?.muPctCnt > 0 ? v.muPctSum / v.muPctCnt : null;
+      const muDollar = v?.muDolCnt > 0 ? v.muDolSum / v.muDolCnt : (rd?.mu ?? null);
+      const spend    = rd?.spend ?? 0;
+      if(muPct === null && spend === 0) return;
+      muMatrix[s.name][reg] = { muPct, muDollar, spend };
+    });
   });
 
-  // Global min/max MU% (exclude near-zero direct-bill < 5%)
+  // ── Global colour scale (only valid MU% cells) ────────────────────────────
   const allPcts = [];
-  Object.values(muMatrix).forEach(sup=>Object.values(sup).forEach(c=>{ if(c.muPct>5) allPcts.push(c.muPct); }));
+  Object.values(muMatrix).forEach(sup=>
+    Object.values(sup).forEach(c=>{ if(c.muPct!=null && c.muPct>0) allPcts.push(c.muPct); })
+  );
   const gMin = allPcts.length ? Math.min(...allPcts) : 20;
   const gMax = allPcts.length ? Math.max(...allPcts) : 50;
 
   function cellBg(pct){
-    if(pct === null || pct <= 5) return '#F1F5F9';
+    if(pct === null || pct <= 0) return '#F8FAFC';
     const t = Math.max(0, Math.min(1, (pct-gMin)/(gMax-gMin||1)));
     let r,g,b;
-    if(t < 0.5){ r=Math.round(76+(255-76)*t*2); g=Math.round(175+(193-175)*t*2); b=Math.round(80+(7-80)*t*2); }
+    if(t < 0.5){ r=Math.round(76+(255-76)*t*2);  g=Math.round(175+(193-175)*t*2); b=Math.round(80+(7-80)*t*2);   }
     else        { r=Math.round(255+(220-255)*(t-.5)*2); g=Math.round(193+(53-193)*(t-.5)*2); b=Math.round(7+(53-7)*(t-.5)*2); }
     return `rgba(${r},${g},${b},0.28)`;
   }
 
-  // Compute per-supplier: minMuPct, maxMuPct, delta, potentialSavings
-  const th = `style="padding:8px 10px;font-size:11px;font-weight:700;text-align:center;white-space:nowrap;color:#334155;border-right:1px solid #DDE3EC"`;
+  // ── Header ────────────────────────────────────────────────────────────────
+  const th  = `style="padding:8px 10px;font-size:11px;font-weight:700;text-align:center;white-space:nowrap;color:#334155;border-right:1px solid #DDE3EC"`;
   const thL = `style="padding:8px 10px;font-size:11px;font-weight:700;text-align:left;white-space:nowrap;color:#334155;border-right:1px solid #DDE3EC;position:sticky;left:0;background:#F8FAFC;z-index:2"`;
-
   let headHtml = `<th ${thL}>Supplier</th>`;
-  regions.forEach(r=>{
-    const short = r.length>12 ? r.slice(0,11)+'…' : r;
-    headHtml += `<th ${th} title="${r}">${short}</th>`;
-  });
+  KEY_REGIONS.forEach(r=> headHtml += `<th ${th}>${r}</th>`);
   headHtml += `<th ${th} style="background:#EFF6FF;border-left:2px solid #93C5FD">Total Spend</th>`;
   headHtml += `<th ${th} style="background:#FFF7ED;border-left:2px solid #FCA5A5">MU% Delta<br><span style="font-weight:400;font-size:10px">(Max − Min)</span></th>`;
-  headHtml += `<th ${th} style="background:#F0FDF4;border-left:2px solid #6EE7B7">Potential Savings<br><span style="font-weight:400;font-size:10px">if min MU% applied</span></th>`;
+  headHtml += `<th ${th} style="background:#F0FDF4;border-left:2px solid #6EE7B7">Potential Savings<br><span style="font-weight:400;font-size:10px">if lowest regional MU% applied</span></th>`;
   document.getElementById('mu-region-head').innerHTML = headHtml;
 
-  let bodyHtml = '';
-  let totalSavings = 0;
-  let totalSpendAll = 0;
+  // ── Rows ──────────────────────────────────────────────────────────────────
+  let bodyHtml = '', totalSavings = 0, totalSpendAll = 0;
 
   data.forEach((s,si)=>{
-    const cells = muMatrix[s.name];
-    // valid cells for delta / savings
-    const validPcts = Object.values(cells).filter(c=>c.muPct>5).map(c=>c.muPct);
+    const cells = muMatrix[s.name] || {};
+
+    // Valid MU% values across key regions for this supplier
+    const validCells = KEY_REGIONS.map(r=>cells[r]).filter(c=>c?.muPct!=null && c.muPct>0);
+    const validPcts  = validCells.map(c=>c.muPct);
     const minPct = validPcts.length ? Math.min(...validPcts) : null;
     const maxPct = validPcts.length ? Math.max(...validPcts) : null;
-    const delta  = (minPct!==null && maxPct!==null) ? (maxPct-minPct) : null;
+    const delta  = (minPct!==null && maxPct!==null && validPcts.length>1) ? (maxPct-minPct) : null;
 
-    // Potential savings: for each region with muPct>5, apply minPct
+    // Potential savings: for each key region, apply the lowest regional MU% to that region's spend
+    // Formula: savings_r = spend_r × (MU%_r − minMU%) / (100 + MU%_r)
+    // Derivation: spend = hrs × BR = hrs × PR × (1 + MU%/100)
+    //             new_spend = hrs × PR × (1 + minMU%/100)
+    //             savings = spend × (MU% − minMU%) / (100 + MU%)
     let savings = 0;
     if(minPct !== null){
-      for(const c of Object.values(cells)){
-        if(c.muPct > 5 && c.spend > 0){
-          const muDec = c.muPct/100; const minDec = minPct/100;
-          savings += c.spend * (muDec - minDec) / (1 + muDec);
-        }
-      }
+      KEY_REGIONS.forEach(reg=>{
+        const c = cells[reg];
+        if(!c || !c.muPct || c.muPct <= 0 || c.spend <= 0) return;
+        savings += c.spend * (c.muPct - minPct) / (100 + c.muPct);
+      });
     }
-    totalSavings += savings;
+    totalSavings  += savings;
     totalSpendAll += s.totalSpend;
 
     const rowBg = si%2===0 ? '#fff' : '#FAFBFC';
     let row = `<tr style="background:${rowBg};border-bottom:1px solid #EEF2F7">`;
     row += `<td style="padding:7px 10px;font-weight:600;font-size:12px;white-space:nowrap;border-right:1px solid #DDE3EC;position:sticky;left:0;background:${rowBg};z-index:1">${s.name}</td>`;
 
-    regions.forEach(reg=>{
+    KEY_REGIONS.forEach(reg=>{
       const c = cells[reg];
-      if(!c){
-        row += `<td style="padding:6px 8px;text-align:center;color:#CBD5E1;font-size:11px;background:#FAFBFC;border-right:1px solid #EEF2F7">—</td>`;
+      if(!c || (c.muPct===null && c.spend===0)){
+        row += `<td style="padding:6px 8px;text-align:center;color:#CBD5E1;font-size:11px;background:#F8FAFC;border-right:1px solid #EEF2F7">—</td>`;
+      } else if(c.muPct === null){
+        // has spend but no MU rate (direct-bill)
+        row += `<td style="padding:5px 8px;text-align:center;background:#F1F5F9;border-right:1px solid #EEF2F7;white-space:nowrap;font-size:11px;color:#94A3B8">direct<br><span style="font-size:10px">${fmt$(c.spend)}</span></td>`;
       } else {
-        const bg = cellBg(c.muPct);
-        const pctStr = c.muPct>5 ? `<strong>${c.muPct.toFixed(1)}%</strong>` : `<span style="color:#94A3B8">${c.muPct.toFixed(1)}%</span>`;
-        const dolStr = `<span style="font-size:10px;color:#64748B">($${c.muDollar.toFixed(2)})</span>`;
-        row += `<td style="padding:5px 8px;text-align:center;background:${bg};border-right:1px solid #EEF2F7;white-space:nowrap">${pctStr}<br>${dolStr}</td>`;
+        const bg  = cellBg(c.muPct);
+        const isMins = validPcts.length>1 && c.muPct===minPct;
+        const isMaxis = validPcts.length>1 && c.muPct===maxPct && minPct!==maxPct;
+        const badge  = isMins ? ' <span style="font-size:9px;background:#166534;color:#fff;border-radius:3px;padding:1px 4px">MIN</span>'
+                     : isMaxis? ' <span style="font-size:9px;background:#991B1B;color:#fff;border-radius:3px;padding:1px 4px">MAX</span>' : '';
+        const dolStr = c.muDollar!=null ? `<br><span style="font-size:10px;color:#64748B">($${c.muDollar.toFixed(2)})</span>` : '';
+        row += `<td style="padding:5px 8px;text-align:center;background:${bg};border-right:1px solid #EEF2F7;white-space:nowrap"><strong>${c.muPct.toFixed(1)}%</strong>${badge}${dolStr}</td>`;
       }
     });
 
@@ -1166,31 +1179,30 @@ function buildMuRegionTable(){
     row += `<td style="padding:6px 10px;text-align:right;font-weight:600;white-space:nowrap;border-left:2px solid #93C5FD;background:#EFF6FF">${fmt$(s.totalSpend)}</td>`;
 
     // Delta
-    if(delta !== null && delta > 0.5){
-      const dBg = delta>15 ? 'rgba(239,68,68,.15)' : delta>7 ? 'rgba(249,115,22,.12)' : 'rgba(251,191,36,.15)';
-      row += `<td style="padding:6px 10px;text-align:center;font-weight:700;white-space:nowrap;border-left:2px solid #FCA5A5;background:${dBg};color:#92400E">${delta.toFixed(1)} pp</td>`;
-    } else if(delta !== null){
-      row += `<td style="padding:6px 10px;text-align:center;white-space:nowrap;border-left:2px solid #FCA5A5;background:#FFF7ED;color:#64748B">${delta.toFixed(1)} pp</td>`;
+    if(delta !== null){
+      const dBg = delta>10 ? 'rgba(239,68,68,.15)' : delta>5 ? 'rgba(249,115,22,.12)' : 'rgba(251,191,36,.15)';
+      const dCol = delta>5 ? '#92400E' : '#78350F';
+      row += `<td style="padding:6px 10px;text-align:center;font-weight:700;white-space:nowrap;border-left:2px solid #FCA5A5;background:${dBg};color:${dCol}">${delta.toFixed(1)} pp</td>`;
     } else {
       row += `<td style="padding:6px 10px;text-align:center;border-left:2px solid #FCA5A5;background:#FFF7ED;color:#CBD5E1">—</td>`;
     }
 
     // Savings
     if(savings > 500){
-      const sBg = savings>100000 ? 'rgba(21,128,61,.12)' : savings>20000 ? 'rgba(22,163,74,.1)' : 'rgba(134,239,172,.2)';
+      const sBg = savings>100000 ? 'rgba(21,128,61,.15)' : savings>20000 ? 'rgba(22,163,74,.1)' : 'rgba(134,239,172,.2)';
       row += `<td style="padding:6px 10px;text-align:right;font-weight:700;white-space:nowrap;border-left:2px solid #6EE7B7;background:${sBg};color:#166534">${fmt$(savings)}</td>`;
     } else {
-      row += `<td style="padding:6px 10px;text-align:right;white-space:nowrap;border-left:2px solid #6EE7B7;background:#F0FDF4;color:#94A3B8">${savings>0 ? fmt$(savings) : '—'}</td>`;
+      row += `<td style="padding:6px 10px;text-align:right;white-space:nowrap;border-left:2px solid #6EE7B7;background:#F0FDF4;color:#94A3B8">${savings>0?fmt$(savings):'—'}</td>`;
     }
 
     row += '</tr>';
     bodyHtml += row;
   });
 
-  // Footer totals
+  // Footer
   bodyHtml += `<tr style="background:#F1F5F9;font-weight:700;border-top:2px solid #94A3B8;font-size:12px">
     <td style="padding:8px 10px;position:sticky;left:0;background:#F1F5F9;border-right:1px solid #DDE3EC">${data.length} suppliers</td>
-    ${regions.map(()=>'<td></td>').join('')}
+    ${KEY_REGIONS.map(()=>'<td></td>').join('')}
     <td style="padding:8px 10px;text-align:right;border-left:2px solid #93C5FD;background:#DBEAFE">${fmt$(totalSpendAll)}</td>
     <td style="border-left:2px solid #FCA5A5;background:#FED7AA"></td>
     <td style="padding:8px 10px;text-align:right;border-left:2px solid #6EE7B7;background:#BBF7D0;color:#14532D">${fmt$(totalSavings)}</td>
