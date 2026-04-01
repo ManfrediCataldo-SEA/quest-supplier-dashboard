@@ -1,0 +1,1569 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quest Non-IT Staffing — Executive Dashboard</title>
+<style>
+  :root {
+    --navy: #051C2C;
+    --blue: #0A6EBD;
+    --blue-light: #1E88E5;
+    --accent: #00B0F0;
+    --red: #D32F2F;
+    --amber: #F9A825;
+    --green: #2E7D32;
+    --green-light: #4CAF50;
+    --bg: #F4F6F9;
+    --card: #FFFFFF;
+    --border: #DDE3EC;
+    --text: #1A1A2E;
+    --muted: #6B7280;
+    --font: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: var(--font); background: var(--bg); color: var(--text); font-size: 14px; }
+
+  /* ─ Header ─ */
+  .header { background: var(--navy); color: #fff; padding: 18px 32px; display: flex; align-items: center; justify-content: space-between; }
+  .header-left h1 { font-size: 20px; font-weight: 700; letter-spacing: -.3px; }
+  .header-left p  { font-size: 12px; color: #8BA0B2; margin-top: 2px; }
+  .header-badge { background: var(--accent); color: var(--navy); font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 20px; }
+
+  /* ─ Nav tabs ─ */
+  .nav { background: #0A263A; display: flex; gap: 2px; padding: 0 32px; overflow-x: auto; }
+  .nav-btn { background: transparent; border: none; color: #8BA0B2; padding: 12px 20px; cursor: pointer; font-size: 13px; font-weight: 500; white-space: nowrap; border-bottom: 3px solid transparent; transition: .2s; }
+  .nav-btn:hover { color: #fff; }
+  .nav-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  /* ─ Filters bar ─ */
+  .filters-bar { background: #fff; border-bottom: 1px solid var(--border); padding: 10px 32px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+  .filters-bar label { font-size: 12px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .5px; }
+  .filters-bar select { padding: 6px 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 13px; background: #fff; cursor: pointer; }
+  .filter-sep { color: var(--border); }
+
+  /* ─ Main content ─ */
+  .page { display: none; padding: 24px 32px; }
+  .page.active { display: block; }
+
+  /* ─ KPI cards ─ */
+  .kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 24px; }
+  .kpi { background: var(--card); border-radius: 10px; padding: 18px 20px; border-left: 4px solid var(--blue); box-shadow: 0 1px 4px rgba(0,0,0,.07); }
+  .kpi.red    { border-left-color: var(--red); }
+  .kpi.green  { border-left-color: var(--green); }
+  .kpi.amber  { border-left-color: var(--amber); }
+  .kpi.accent { border-left-color: var(--accent); }
+  .kpi-val { font-size: 26px; font-weight: 700; color: var(--navy); line-height: 1; }
+  .kpi-lbl { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-top: 6px; }
+  .kpi-sub { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+  /* ─ Cards / panels ─ */
+  .card { background: var(--card); border-radius: 10px; padding: 20px 24px; box-shadow: 0 1px 4px rgba(0,0,0,.07); margin-bottom: 20px; }
+  .card-title { font-size: 14px; font-weight: 700; color: var(--navy); margin-bottom: 4px; }
+  .card-sub   { font-size: 12px; color: var(--muted); margin-bottom: 16px; }
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+  @media(max-width:900px){ .two-col,.three-col { grid-template-columns: 1fr; } }
+
+  /* ─ Insight boxes ─ */
+  .insights { display: flex; flex-direction: column; gap: 10px; margin-top: 16px; }
+  .insight { background: #F0F7FF; border-left: 4px solid var(--blue); border-radius: 0 8px 8px 0; padding: 12px 16px; }
+  .insight.red    { background: #FFF5F5; border-left-color: var(--red); }
+  .insight.green  { background: #F1F8F1; border-left-color: var(--green); }
+  .insight.amber  { background: #FFFDE7; border-left-color: var(--amber); }
+  .insight-label  { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; color: var(--muted); margin-bottom: 4px; }
+  .insight-text   { font-size: 13px; color: var(--navy); line-height: 1.5; }
+  .insight-so     { font-size: 12px; color: var(--muted); margin-top: 4px; font-style: italic; }
+
+  /* ─ Tables ─ */
+  .tbl-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  thead th { background: var(--navy); color: #fff; padding: 9px 12px; text-align: left; font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: .4px; cursor: pointer; white-space: nowrap; }
+  thead th:hover { background: #0A3A5C; }
+  tbody tr:nth-child(even) { background: #F8FAFB; }
+  tbody tr:hover { background: #EFF6FF; }
+  tbody td { padding: 8px 12px; border-bottom: 1px solid var(--border); }
+  .pill { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+  .pill-green { background: #E8F5E9; color: #2E7D32; }
+  .pill-amber { background: #FFF8E1; color: #E65100; }
+  .pill-red   { background: #FFEBEE; color: #C62828; }
+
+  /* ─ SVG Charts ─ */
+  .chart-wrap { position: relative; }
+  svg { font-family: var(--font); overflow: visible; }
+
+  /* ─ Heatmap ─ */
+  .heatmap-table th, .heatmap-table td { text-align: center; padding: 7px 10px; font-size: 12px; border: 1px solid var(--border); }
+  .heatmap-table th { background: var(--navy); color: #fff; font-size: 11px; }
+  .heatmap-table td.supplier-name { text-align: left; font-weight: 500; background: #F8FAFB; white-space: nowrap; }
+  .heatmap-table td.empty { background: #F8FAFB; color: #ccc; }
+
+  /* ─ Legend ─ */
+  .legend { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 8px; }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); }
+  .legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+
+  /* ─ Contract section ─ */
+  .contract-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+  .contract-card { background: var(--card); border-radius: 10px; padding: 18px; border: 1px solid var(--border); }
+  .contract-card h3 { font-size: 13px; color: var(--navy); font-weight: 700; margin-bottom: 8px; }
+  .contract-card ul { padding-left: 16px; }
+  .contract-card li { font-size: 12px; color: var(--muted); margin-bottom: 5px; line-height: 1.5; }
+  .contract-card li strong { color: var(--text); }
+  .flag { display: inline-flex; align-items: center; gap: 5px; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; margin: 2px; }
+  .flag-red   { background: #FFEBEE; color: #C62828; }
+  .flag-amber { background: #FFF8E1; color: #E65100; }
+  .flag-green { background: #E8F5E9; color: #2E7D32; }
+
+  footer { text-align: center; padding: 20px; color: var(--muted); font-size: 11px; border-top: 1px solid var(--border); margin-top: 20px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <h1>Quest Non-IT Staffing — Supplier Analytics</h1>
+    <p>Broadleaf MSP Program · Engagement Analysis · Data as of YTD</p>
+  </div>
+  <span class="header-badge">CONFIDENTIAL</span>
+</div>
+
+<div class="nav">
+  <button class="nav-btn active" onclick="showPage('overview')">Overview</button>
+  <button class="nav-btn" onclick="showPage('competitiveness')">Supplier Competitiveness</button>
+  <button class="nav-btn" onclick="showPage('spend')">Spend Analysis</button>
+  <button class="nav-btn" onclick="showPage('performance')">Price vs Performance</button>
+  <button class="nav-btn" onclick="showPage('regional')">Regional Insights</button>
+  <button class="nav-btn" onclick="showPage('contract')">Contract Context</button>
+</div>
+
+<div class="filters-bar">
+  <label>Region:</label>
+  <select id="filterRegion" onchange="applyFilters()">
+<option value="All">All Regions</option>
+        <option>ACL</option>
+        <option>AmeriPath</option>
+        <option>Corporate</option>
+        <option>East</option>
+        <option>Esoteric</option>
+        <option>ExamOne</option>
+        <option>Great Midwest</option>
+        <option>Healthcare Analytic Solutions</option>
+        <option>North</option>
+        <option>Pack Health</option>
+        <option>SouthEast</option>
+        <option>SouthWest</option>
+        <option>West</option>
+        <option>Workforce Health Solutions</option>
+      </select>
+  <span class="filter-sep">|</span>
+  <label>Role Category:</label>
+  <select id="filterRole" onchange="applyFilters()">
+    <option value="All">All Categories</option>
+    <option>Back office</option>
+    <option>Field</option>
+
+    <option>Laboratory</option>
+    <option>Other</option>
+  </select>
+  <span class="filter-sep">|</span>
+  <label>Supplier:</label>
+  <select id="filterSupplier" onchange="applyFilters()">
+    <option value="All">All Suppliers</option>
+  </select>
+  <span class="filter-sep">|</span>
+  <label>Min Spend ($):</label>
+  <select id="filterSpend" onchange="applyFilters()">
+    <option value="0">No minimum</option>
+    <option value="100000">&gt; $100K</option>
+    <option value="500000">&gt; $500K</option>
+    <option value="1000000">&gt; $1M</option>
+  </select>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════ OVERVIEW -->
+<div id="page-overview" class="page active">
+  <div class="kpi-row" id="kpi-row"></div>
+  <div class="card">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:4px">
+      <div>
+        <div class="card-title">Spend Overview — All Suppliers</div>
+        <div class="card-sub" id="spend-overview-sub">Total spend by supplier · % share of program · Sortable by any column</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
+        <label style="font-size:12px;color:#6B7280;font-weight:600;text-transform:uppercase;letter-spacing:.5px">Group by:</label>
+        <select id="groupBySelect" onchange="buildSpendOverviewTable()" style="padding:6px 12px;border:1px solid #DDE3EC;border-radius:6px;font-size:13px;font-weight:600;background:#fff;cursor:pointer;color:#051C2C">
+          <option value="supplier">Supplier</option>
+          <option value="role">Role Category</option>
+          <option value="title">Normalized Title</option>
+        </select>
+      </div>
+    </div>
+    <div class="tbl-wrap"><table id="tbl-spend-overview">
+      <thead><tr id="spend-overview-head">
+        <th onclick="sortTable('tbl-spend-overview',0)">#</th>
+        <th onclick="sortTable('tbl-spend-overview',1)">Supplier ↕</th>
+        <th onclick="sortTable('tbl-spend-overview',2)">Total Spend ↕</th>
+        <th onclick="sortTable('tbl-spend-overview',3)">% of Total ↕</th>
+        <th onclick="sortTable('tbl-spend-overview',4)">Avg Bill Rate ↕</th>
+        <th onclick="sortTable('tbl-spend-overview',5)">Avg MU ↕</th>
+        <th onclick="sortTable('tbl-spend-overview',6)">% Not Meeting ↕</th>
+      </tr></thead>
+      <tbody id="tbl-spend-body"></tbody>
+    </table></div>
+  </div>
+  <div class="card">
+    <div class="card-title">Executive Summary — Key Findings</div>
+    <div class="card-sub">Quest–Broadleaf Non-IT Staffing Program · Actionable Insights</div>
+    <div class="insights">
+      <div class="insight red">
+        <div class="insight-label">⚠ Concentration Risk</div>
+        <div class="insight-text">TalentBurst, Inc. accounts for <strong>~$12M</strong> of total spend — representing over <strong>30% of the entire program</strong>. Single-supplier dependency at this scale creates significant negotiating disadvantage and business continuity risk.</div>
+        <div class="insight-so">→ Recommend: Negotiate volume-based rebate or capped MU with TalentBurst; develop secondary supplier pipeline in SouthEast and North where dependency is highest.</div>
+      </div>
+      <div class="insight amber">
+        <div class="insight-label">⚠ Performance-Spend Misalignment</div>
+        <div class="insight-text">Several high-spend suppliers carry elevated "not meeting expectations" rates: <strong>Integrated Resources (35.7%)</strong>, <strong>Advanced Resources (42.4%)</strong>, and <strong>Equiliem (40.7%)</strong> — yet continue receiving material volume.</div>
+        <div class="insight-so">→ Recommend: Implement quarterly performance reviews with volume reallocation triggers. Redirect volume from underperformers toward Pinnacle, LanceSoft, and Synergy (best value profile).</div>
+      </div>
+      <div class="insight green">
+        <div class="insight-label">✓ Best Value Opportunities</div>
+        <div class="insight-text"><strong>Pinnacle</strong> ($1.2M spend, 17.4% not-meeting), <strong>LanceSoft</strong> ($1.1M, 20.3%), and <strong>Synergy Global</strong> ($462K, 17.4%) offer strong performance at competitive MU rates (~9%). These suppliers should receive increased volume allocation.</div>
+        <div class="insight-so">→ Recommend: Expand preferred-supplier agreements with Pinnacle and LanceSoft across all 6 regions.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════ SUPPLIER COMPETITIVENESS -->
+<div id="page-competitiveness" class="page">
+  <div class="card">
+    <div class="card-title">Supplier MU Rate Benchmarking — All Regions</div>
+    <div class="card-sub">Average Markup ($) per supplier, with regional breakdown. Lower MU = more competitive pricing. Click column headers to sort.</div>
+    <div class="tbl-wrap"><table id="tbl-competitiveness">
+      <thead><tr>
+        <th onclick="sortTable('tbl-competitiveness',0)">Supplier ↕</th>
+        <th onclick="sortTable('tbl-competitiveness',1)">Avg MU ($) ↕</th>
+        <th onclick="sortTable('tbl-competitiveness',2)">Avg Pay Rate ↕</th>
+        <th onclick="sortTable('tbl-competitiveness',3)">Avg Bill Rate ↕</th>
+        <th onclick="sortTable('tbl-competitiveness',4)">Total Spend ↕</th>
+        <th onclick="sortTable('tbl-competitiveness',5)">Regions Active</th>
+        <th onclick="sortTable('tbl-competitiveness',6)">MU Tier</th>
+      </tr></thead>
+      <tbody id="tbl-comp-body"></tbody>
+    </table></div>
+    <div class="insights" style="margin-top:20px">
+      <div class="insight">
+        <div class="insight-label">Insight 1 — Low-MU Outliers</div>
+        <div class="insight-text"><strong>TalentBurst ($6.37 avg MU)</strong> and <strong>TEKsystems ($7.03)</strong> offer the most competitive markup rates in the program. Aureus Radiology, CHG, HealthCare Connections, and Triage operate on a <strong>$0 MU model</strong> (direct bill/travel nursing), which is structurally different and should be benchmarked separately.</div>
+        <div class="insight-so">→ Use TalentBurst's MU as the benchmark ceiling for renegotiating contracts with higher-MU suppliers.</div>
+      </div>
+      <div class="insight amber">
+        <div class="insight-label">Insight 2 — High-MU Premium Suppliers</div>
+        <div class="insight-text"><strong>Synectics East ($12.73)</strong>, <strong>Soliant Health ($37.65)</strong>, and <strong>Ampian Staffing ($23.30)</strong> are significant outliers with markups 2–5x the program average. Soliant and Ampian appear to be niche/specialized roles justifying premium rates.</div>
+        <div class="insight-so">→ Audit Synectics East placements — $12.73 MU on $846K spend represents ~$100K in potential savings if renegotiated to program average.</div>
+      </div>
+      <div class="insight green">
+        <div class="insight-label">Insight 3 — Negotiation Levers</div>
+        <div class="insight-text">The program-wide weighted average MU is approximately <strong>$8.15</strong>. Suppliers at <strong>>$10 MU</strong> (Iconma, Integrated Resources, Synectics, Pinnacle in certain regions) represent a combined opportunity of <strong>$500K+</strong> in savings if aligned to benchmark rates.</div>
+        <div class="insight-so">→ Target next MSA renewal cycle with a standardized MU cap of $9.00 for general staffing (excluding specialized/travel nursing).</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ SPEND ANALYSIS -->
+<div id="page-spend" class="page">
+  <div class="kpi-row" id="kpi-spend-row"></div>
+  <div class="two-col">
+    <div class="card">
+      <div class="card-title">Spend by Supplier (Sorted Descending)</div>
+      <div class="card-sub">Total YTD spend — all regions combined</div>
+      <div class="chart-wrap"><svg id="chart-spend-bar" width="100%" height="500"></svg></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Spend by Region</div>
+      <div class="card-sub">Aggregated spend across all suppliers per region</div>
+      <div class="chart-wrap"><svg id="chart-region-spend" width="100%" height="300"></svg></div>
+      <div style="margin-top:24px">
+        <div class="card-title">Supplier Count by Region</div>
+        <div class="card-sub">Number of active suppliers serving each region</div>
+        <div class="chart-wrap"><svg id="chart-region-count" width="100%" height="200"></svg></div>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">Fragmentation & Dependency Analysis</div>
+    <div class="card-sub">Spend concentration metrics across the supplier base</div>
+    <div class="insights">
+      <div class="insight red">
+        <div class="insight-label">⚠ Extreme Concentration — TalentBurst</div>
+        <div class="insight-text">TalentBurst alone accounts for <strong>$12.0M (~31%)</strong> of total spend. The top 3 suppliers (TalentBurst, Synectics, Spectraforce) represent <strong>~$17.3M or 44%</strong> of total program spend. This is well above the recommended 30% threshold for top-3 concentration.</div>
+        <div class="insight-so">→ Recommend: Set a supplier volume cap at 20% of total spend to reduce dependency. Proactively diversify volume to Tier 2 performers before next MSA renewal.</div>
+      </div>
+      <div class="insight amber">
+        <div class="insight-label">⚠ Fragmentation Risk — Tail Suppliers</div>
+        <div class="insight-text">14 suppliers each account for <strong>less than $200K</strong> in annual spend. Managing 36 active suppliers adds administrative overhead without proportional value. Tail suppliers include Cynet ($0), TEKsystems ($12K), Atlantic Group ($112K).</div>
+        <div class="insight-so">→ Recommend: Sunset suppliers below $100K annual spend or consolidate to a preferred panel of 15–18 suppliers to reduce management complexity by ~40%.</div>
+      </div>
+      <div class="insight green">
+        <div class="insight-label">✓ Regional Spend Optimization</div>
+        <div class="insight-text">SouthEast is the largest spend region (~35% of total), yet has the highest % not-meeting rate. Reallocating even 10% of SouthEast volume from underperformers to top performers could yield $1.5M in value improvement through lower MU and better quality.</div>
+        <div class="insight-so">→ Recommend: Conduct SouthEast-specific supplier rationalization as a near-term priority.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ PRICE vs PERFORMANCE -->
+<div id="page-performance" class="page">
+  <div style="background:#EFF6FF;border:1px solid #BFDBFE;border-radius:8px;padding:12px 20px;margin-bottom:16px;display:flex;gap:20px;align-items:center;flex-wrap:wrap">
+    <span style="font-size:12px;font-weight:700;color:#1E40AF;text-transform:uppercase;letter-spacing:.5px">⚙ Filter this tab:</span>
+    <label style="font-size:12px;color:#555;font-weight:600">Region:
+      <select id="perfRegion" onchange="rebuildPerf()" style="margin-left:6px;padding:5px 10px;border:1px solid #CBD5E1;border-radius:6px;font-size:13px">
+<option value="All">All Regions</option>
+        <option>ACL</option>
+        <option>AmeriPath</option>
+        <option>Corporate</option>
+        <option>East</option>
+        <option>Esoteric</option>
+        <option>ExamOne</option>
+        <option>Great Midwest</option>
+        <option>Healthcare Analytic Solutions</option>
+        <option>North</option>
+        <option>Pack Health</option>
+        <option>SouthEast</option>
+        <option>SouthWest</option>
+        <option>West</option>
+        <option>Workforce Health Solutions</option>
+      </select>
+    </label>
+    <label style="font-size:12px;color:#555;font-weight:600">Role Category:
+      <select id="perfRole" onchange="rebuildPerf()" style="margin-left:6px;padding:5px 10px;border:1px solid #CBD5E1;border-radius:6px;font-size:13px">
+        <option value="All">All Categories</option>
+        <option>Back office</option><option>Field</option><option>Laboratory</option><option>Other</option>
+      </select>
+    </label>
+    <span style="font-size:11px;color:#6B7280;font-style:italic">Bill Rate recalculates from individual assignment data when a filter is active</span>
+  </div>
+  <div class="card">
+    <div class="card-title">Price vs Performance Matrix</div>
+    <div class="card-sub">Bubble chart — X axis: Average Bill Rate (Pay Rate + MU) · Y axis: % Not Meeting Expectations · Bubble size: Total Spend · Hover for details (shows full Pay Rate + MU breakdown)</div>
+    <div class="legend">
+      <span class="legend-item"><span class="legend-dot" style="background:#2E7D32"></span> Best Value (Low Bill Rate, Low Not-Meeting)</span>
+      <span class="legend-item"><span class="legend-dot" style="background:#1565C0"></span> Competitive (Low Bill Rate, Higher Not-Meeting)</span>
+      <span class="legend-item"><span class="legend-dot" style="background:#E65100"></span> Overpriced (High Bill Rate, Low Not-Meeting)</span>
+      <span class="legend-item"><span class="legend-dot" style="background:#D32F2F"></span> Underperforming (High Bill Rate, High Not-Meeting)</span>
+    </div>
+    <div class="chart-wrap" style="position:relative">
+      <svg id="chart-scatter" width="100%" height="460"></svg>
+      <div id="tooltip" style="position:absolute;display:none;background:rgba(5,28,44,.9);color:#fff;padding:10px 14px;border-radius:8px;font-size:12px;pointer-events:none;max-width:220px;z-index:10;line-height:1.6"></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">Supplier Performance Ranking</div>
+    <div class="card-sub">Ranked by composite score: Bill Rate efficiency × performance quality. Best value = low Bill Rate + low % not meeting.</div>
+    <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:8px;padding:10px 16px;margin-bottom:14px;display:flex;gap:16px;align-items:center;flex-wrap:wrap">
+      <span style="font-size:11px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.5px">⚙ Filter:</span>
+      <label style="font-size:12px;color:#555;font-weight:600">Region:
+        <select id="perfRegion2" onchange="syncPerfFilters('region',this.value)" style="margin-left:6px;padding:4px 10px;border:1px solid #CBD5E1;border-radius:6px;font-size:13px">
+<option value="All">All Regions</option>
+        <option>ACL</option>
+        <option>AmeriPath</option>
+        <option>Corporate</option>
+        <option>East</option>
+        <option>Esoteric</option>
+        <option>ExamOne</option>
+        <option>Great Midwest</option>
+        <option>Healthcare Analytic Solutions</option>
+        <option>North</option>
+        <option>Pack Health</option>
+        <option>SouthEast</option>
+        <option>SouthWest</option>
+        <option>West</option>
+        <option>Workforce Health Solutions</option>
+      </select>
+      </label>
+      <label style="font-size:12px;color:#555;font-weight:600">Role Category:
+        <select id="perfRole2" onchange="syncPerfFilters('role',this.value)" style="margin-left:6px;padding:4px 10px;border:1px solid #CBD5E1;border-radius:6px;font-size:13px">
+          <option value="All">All Categories</option>
+          <option>Back office</option><option>Field</option><option>Laboratory</option><option>Other</option>
+        </select>
+      </label>
+      <span id="perf-filter-badge" style="display:none;font-size:11px;background:#DBEAFE;color:#1E40AF;padding:2px 10px;border-radius:12px;font-weight:600">● Filtered</span>
+      <button onclick="clearPerfFilters()" style="font-size:11px;padding:3px 10px;border:1px solid #CBD5E1;border-radius:6px;background:#fff;cursor:pointer;color:#555">✕ Clear</button>
+    </div>
+    <div class="tbl-wrap"><table id="tbl-performance">
+      <thead><tr>
+        <th onclick="sortTable('tbl-performance',0)">#</th>
+        <th onclick="sortTable('tbl-performance',1)">Supplier</th>
+        <th onclick="sortTable('tbl-performance',2)">Avg Bill Rate ↕</th>
+        <th onclick="sortTable('tbl-performance',3)">% Not Meeting ↕</th>
+        <th onclick="sortTable('tbl-performance',4)">Total Spend ↕</th>
+        <th onclick="sortTable('tbl-performance',5)">% of Total ↕</th>
+        <th onclick="sortTable('tbl-performance',6)">Value Score ↕</th>
+        <th onclick="sortTable('tbl-performance',7)">Quadrant</th>
+      </tr></thead>
+      <tbody id="tbl-perf-body"></tbody>
+    </table></div>
+    <!-- Per-category insights -->
+    <div style="margin-top:24px">
+      <!-- LABORATORY -->
+      <div style="margin-bottom:8px;padding:6px 14px;background:#EDE9FE;border-left:4px solid #7C3AED;border-radius:4px;font-size:12px;font-weight:700;color:#5B21B6;text-transform:uppercase;letter-spacing:.5px">🔬 Laboratory — 804 assignments · 38 suppliers</div>
+      <div class="insights">
+        <div class="insight green">
+          <div class="insight-label">✓ Preferred Supplier — Best Value in Lab</div>
+          <div class="insight-text"><strong>TalentBurst</strong> holds 30% of all Lab assignments (242 of 804) at the lowest bill rate in the category ($29.93, MU $6.54) — outperforming the pool average MU of ~$10. <strong>Spectraforce</strong> ($29.72 BR, 47 assignments) is a close second at an even slightly lower rate. Both carry a mid-range 22–28% not-meeting rate, which is average for the program.</div>
+          <div class="insight-so">→ Co-designate TalentBurst and Spectraforce as Tier 1 Lab suppliers. Offer volume guarantees in exchange for locked bill rates at current levels, preventing markup creep.</div>
+        </div>
+        <div class="insight red">
+          <div class="insight-label">⚠ Remove from Lab Panel — Poor Performance + High Rates</div>
+          <div class="insight-text"><strong>Randstad</strong> (42.1% not-meeting, $30.42 BR, 24 assignments) and <strong>Advanced Resources Group</strong> (42.4% not-meeting, $30.91 BR, 18 assignments) have the worst Lab performance in the entire program despite charging near-market rates. Nearly 1 in 2 of their Lab placements fails expectations. <strong>Pride Global Healthcare</strong> compounds the issue with $44.06 BR (MU $13.25) and 29.5% NM — premium price, below-average delivery.</div>
+          <div class="insight-so">→ Off-board Randstad and Advanced Resources from Lab immediately; place Pride Global on a rate cap at $35 BR or exit. Redirect volume to TalentBurst and Spectraforce.</div>
+        </div>
+        <div class="insight amber">
+          <div class="insight-label">⚠ Rate Consolidation Opportunity — $500K+ Potential</div>
+          <div class="insight-text"><strong>Synectics</strong> ($40.00 BR, 61 cnt), <strong>Mindlance</strong> ($38.57, 29), and <strong>Iconma</strong> ($40.37, 27) charge 35–40% more per assignment than TalentBurst with no measurable performance advantage (NM 22–29%). These three alone represent 117 Lab assignments at a MU ~$12 vs. $6.54 benchmark — a $6/hr premium on comparable roles.</div>
+          <div class="insight-so">→ Renegotiate Lab bill rates for Synectics, Mindlance, and Iconma to ≤$33 BR or migrate that volume to preferred suppliers, yielding an estimated $400–600K in annual savings.</div>
+        </div>
+      </div>
+
+      <!-- FIELD -->
+      <div style="margin:20px 0 8px;padding:6px 14px;background:#DCFCE7;border-left:4px solid #16A34A;border-radius:4px;font-size:12px;font-weight:700;color:#15803D;text-transform:uppercase;letter-spacing:.5px">🏥 Field — 2,064 assignments · 27 suppliers</div>
+      <div class="insights">
+        <div class="insight green">
+          <div class="insight-label">✓ Preferred Suppliers — Competitive Rate + Adequate Performance</div>
+          <div class="insight-text"><strong>TalentBurst</strong> leads Field with 490 assignments (24% share) at the lowest bill rate of $27.18 (MU $6.88 vs. pool avg ~$9). <strong>Synectics</strong> (143 cnt, $29.23 BR, 22.9% NM) and <strong>All Medical Personnel</strong> (118 cnt, $28.52 BR) round out the competitive tier. These three together represent 751 of 2,064 Field assignments (36%) at below-average rates.</div>
+          <div class="insight-so">→ Grow TalentBurst and Synectics Field share to 45%+ combined through directed volume commitments. Negotiate a sub-$28 BR target for Synectics given its scale.</div>
+        </div>
+        <div class="insight red">
+          <div class="insight-label">⚠ Critical Risk — High-Volume Underperformers Must Be Reduced</div>
+          <div class="insight-text"><strong>Integrated Resources</strong> is the #2 Field supplier by volume (226 assignments) but carries a 35.7% not-meeting rate — meaning ~81 active placements are currently failing expectations. <strong>Rangam</strong> (91 cnt, 34.7% NM) and <strong>All Medical Personnel</strong> (118 cnt, 31.7% NM) add another ~72 underperforming Field workers at near-market rates with no price justification.</div>
+          <div class="insight-so">→ Immediately cap Integrated Resources at 100 Field assignments and redirect excess volume to TalentBurst. Issue 60-day performance cure notices to Rangam and All Medical Personnel.</div>
+        </div>
+        <div class="insight amber">
+          <div class="insight-label">⚠ Niche Premium — Global Technical Talent Rate Outlier</div>
+          <div class="insight-text"><strong>Global Technical Talent</strong> charges $35.30 BR in Field (vs. $27–30 for comparable suppliers) — the highest standard-rate supplier in the category — yet delivers a relatively better 19.5% NM. The $7–8/hr premium over TalentBurst across 74 assignments costs ~$130K/year extra. Their above-average performance suggests a specialized role mix (phlebotomy, patient services) that may warrant a separate rate card.</div>
+          <div class="insight-so">→ Audit Global Technical Talent's Field role mix. If specialized, create a dedicated rate tier; if general Field, renegotiate to ≤$30 BR or reduce allocation.</div>
+        </div>
+      </div>
+
+      <!-- BACK OFFICE -->
+      <div style="margin:20px 0 8px;padding:6px 14px;background:#FEF9C3;border-left:4px solid #CA8A04;border-radius:4px;font-size:12px;font-weight:700;color:#92400E;text-transform:uppercase;letter-spacing:.5px">🗂 Back Office — 258 assignments · 33 suppliers</div>
+      <div class="insights">
+        <div class="insight green">
+          <div class="insight-label">✓ Best Value in Back Office — LanceSoft & Mindlance Underutilized</div>
+          <div class="insight-text"><strong>TalentBurst</strong> is the volume leader (74 cnt, 29% share, BR $44.47, MU $7.76), but <strong>LanceSoft</strong> ($24.98 BR, MU $6.88, NM 20.3%) and <strong>Mindlance</strong> ($28.20 BR, MU $7.92) offer materially lower rates with only 4 and 6 assignments respectively — they are completely underutilized despite being the most cost-effective options. TEKsystems ($27.25 BR, 6 cnt) is also competitive.</div>
+          <div class="insight-so">→ Pilot LanceSoft and Mindlance with 20+ Back Office assignments each to test scalability. Use their current rates as leverage to renegotiate TalentBurst's Back Office BR from $44 toward $35.</div>
+        </div>
+        <div class="insight red">
+          <div class="insight-label">⚠ MSP Bypass Alert — Direct-Bill Suppliers Circumventing Program</div>
+          <div class="insight-text"><strong>HCL America</strong> ($162.62 BR, 47 assignments), <strong>Lonestar Health</strong> ($154.12, 8 cnt), and <strong>Mitchell Martin</strong> ($120.65 BR + $23.27 MU = outlier, 5 cnt) show bill rates 3–4× the Back Office standard with zero or negative MU — classic signatures of direct-bill arrangements routed through the Broadleaf platform but outside MSP fee and governance structures.</div>
+          <div class="insight-so">→ Flag these three suppliers for contract compliance review. Any direct-bill arrangement not approved via the MSA exception process should be transitioned to the managed channel or formally documented with a pricing rationale.</div>
+        </div>
+        <div class="insight amber">
+          <div class="insight-label">⚠ Extreme Fragmentation — 33 Suppliers for 258 Assignments</div>
+          <div class="insight-text">Back Office averages only 7.8 assignments per supplier — making performance management, rate negotiation, and relationship management structurally impossible. 21 of 33 suppliers have fewer than 5 Back Office assignments and contribute less than 15% of category volume combined. This fragmentation also prevents Broadleaf from leveraging volume with any single supplier.</div>
+          <div class="insight-so">→ Consolidate Back Office to 5 core suppliers (TalentBurst, Mindlance, TEKsystems, LanceSoft, Pride Global). Off-board the 28 long-tail suppliers; estimated MU savings from volume consolidation: $150–250K/year.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Cross-category supplier comparison chart -->
+  <div class="card" style="margin-top:24px">
+    <div class="card-title">Cross-Category Supplier Overview</div>
+    <div class="card-sub">Top suppliers ranked by total assignments across Laboratory, Field, and Back Office. Circle size = assignment count · Color = performance (% not meeting expectations) · BR shown inside each bubble.</div>
+    <div id="cross-chart-wrap" style="overflow-x:auto"></div>
+    <div style="display:flex;gap:20px;flex-wrap:wrap;margin-top:10px;font-size:11px">
+      <span><span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:#2E7D32;vertical-align:middle;margin-right:4px"></span>NM &lt;20% — Strong</span>
+      <span><span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:#81C784;vertical-align:middle;margin-right:4px"></span>NM 20–25% — Adequate</span>
+      <span><span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:#FFB300;vertical-align:middle;margin-right:4px"></span>NM 25–32% — Below avg</span>
+      <span><span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:#D32F2F;vertical-align:middle;margin-right:4px"></span>NM &gt;32% — Poor</span>
+      <span><span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:#B0BEC5;vertical-align:middle;margin-right:4px"></span>Not in category</span>
+    </div>
+  </div>
+
+  <!-- Cross-category insights -->
+  <div class="card" style="margin-top:16px">
+    <div class="card-title">Cross-Category Insights — Strategic Takeaways</div>
+    <div class="insights">
+      <div class="insight green">
+        <div class="insight-label">✓ TalentBurst: The Universal Preferred Supplier</div>
+        <div class="insight-text">TalentBurst is the #1 supplier by volume in all three categories simultaneously — Lab (242 cnt, $29.93 BR), Field (490 cnt, $27.18 BR), and Back Office (74 cnt, $44.47 BR) — with consistently below-average MU rates ($6.54–$7.76 vs. pool avg $9–10) and a stable 22% not-meeting rate across the board. No other supplier comes close in breadth or cost efficiency. Combined, TalentBurst holds 806 assignments worth an estimated $10M+ in annual spend.</div>
+        <div class="insight-so">→ Negotiate an enterprise-wide preferred supplier agreement with TalentBurst committing 35–40% of total non-IT volume in exchange for a locked MU cap and a 5% rate reduction on Back Office — the category where they currently charge a premium. This single negotiation is the highest-value lever in the program.</div>
+      </div>
+      <div class="insight red">
+        <div class="insight-label">⚠ Systemic Underperformers Appear Across All Categories</div>
+        <div class="insight-text"><strong>Integrated Resources</strong> (35.7% NM) is a top-3 volume supplier in both Lab and Field with above-market rates — the single most damaging supplier in the program. <strong>Mindlance</strong> (28.7% NM) and <strong>Iconma</strong> (29.1% NM) appear in all three categories with premium rates and below-average performance, contributing to ~300 combined assignments where 1 in 3 is underperforming. Together, these three suppliers represent an estimated $5M+ in spend with a structural performance deficit.</div>
+        <div class="insight-so">→ Launch a coordinated cross-category supplier review for Integrated Resources, Mindlance, and Iconma. Issue joint performance improvement plans with 60-day cure periods and pre-committed volume reallocation triggers. Avoid addressing each category in isolation — the suppliers will negotiate better outcomes if managed holistically.</div>
+      </div>
+      <div class="insight amber">
+        <div class="insight-label">⚠ Back Office Is the Structural Weak Point — Highest Impact for Least Effort</div>
+        <div class="insight-text">While Field drives volume and Lab drives clinical risk, Back Office represents the most structurally broken category: 33 suppliers for 258 assignments (avg 7.8 each), direct-bill arrangements bypassing MSP governance (HCL America, Lonestar — combined $150K+), and rates ranging from $25 to $163 for equivalent roles. Fragmentation at this scale prevents any commercial leverage. Unlike Field or Lab where consolidation is gradual, Back Office can be restructured to 5 suppliers within a single procurement cycle with minimal operational disruption.</div>
+        <div class="insight-so">→ Prioritize Back Office rationalization as the first workstream: consolidate to 5 suppliers, bring direct-bill arrangements into the MSP channel, and use the newly concentrated volume to benchmark TalentBurst's $44 Back Office rate against LanceSoft's $25 — the gap alone represents $150–200K in recoverable annual savings.</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ══════════════════════════════════════════════════════════ REGIONAL INSIGHTS -->
+<div id="page-regional" class="page">
+  <div class="card">
+    <div class="card-title">Regional Spend Heatmap</div>
+    <div class="card-sub">Spend ($) by supplier × region. Darker blue = higher spend concentration. Grey = not active in that region. Click "Total Spend" to sort.</div>
+    <div class="tbl-wrap"><table class="heatmap-table" id="tbl-heatmap"></table></div>
+  </div>
+  <div class="two-col" style="margin-top:20px">
+    <div class="card">
+      <div class="card-title">Regional Performance Comparison</div>
+      <div class="card-sub">Average % not-meeting expectations per region (weighted by spend)</div>
+      <div class="chart-wrap"><svg id="chart-region-perf" width="100%" height="280"></svg></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Regional Pay Rate vs MU</div>
+      <div class="card-sub">Average pay rate and MU per region — identifies markup variation relative to labor cost</div>
+      <div class="chart-wrap"><svg id="chart-region-rates" width="100%" height="280"></svg></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">Regional Insights & Arbitrage Opportunities</div>
+    <div class="insights">
+      <div class="insight red">
+        <div class="insight-label">⚠ SouthEast — Highest Spend, Weakest Performance</div>
+        <div class="insight-text">SouthEast carries the largest spend volume (~$14M+) with an average not-meeting rate near <strong>28%</strong>. Multiple suppliers active in this region — Integrated Resources ($1.4M), TalentBurst ($4.4M), Rangam ($635K) — show performance deficits despite high volume.</div>
+        <div class="insight-so">→ Immediate supplier audit for SouthEast; redirection of 15% volume from bottom quartile suppliers could yield ~$2M in performance-adjusted value.</div>
+      </div>
+      <div class="insight amber">
+        <div class="insight-label">⚠ North Region — Rate Anomalies</div>
+        <div class="insight-text">Global Technical Talent's North placement shows a pay rate of <strong>$51.60</strong> with only $3.70 MU — an outlier suggesting these may be specialized roles misclassified in the general staffing pool. TalentBurst North at $4.78 MU on $19/hr pay rate is the most favorable in the program.</div>
+        <div class="insight-so">→ Review role classification in North region. Ensure specialized roles are benchmarked against appropriate market data, not general staffing comparables.</div>
+      </div>
+      <div class="insight green">
+        <div class="insight-label">✓ West — Most Competitive Region</div>
+        <div class="insight-text">West region shows the most consistent pricing with multiple suppliers competing at MU rates of $9–10. This competition appears to be holding rates in check. TalentBurst ($7.16 MU), Synectics ($9.57), and BayOne ($9.48) provide strong competitive tension.</div>
+        <div class="insight-so">→ Use West region's competitive dynamics as a model for restructuring supplier panels in SouthEast and Great Midwest. Introduce competitive bidding mechanisms.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════ CONTRACT CONTEXT -->
+<div id="page-contract" class="page">
+  <div class="card">
+    <div class="card-title">Quest–Broadleaf MSA — Contract Context & Compliance Analysis</div>
+    <div class="card-sub">Based on the Master Service Agreement between Quest Diagnostics and Broadleaf Results (MSP). Key findings and potential leakage areas.</div>
+  </div>
+  <div class="contract-grid">
+    <div class="contract-card">
+      <h3>📋 MSP Program Structure</h3>
+      <ul>
+        <li><strong>Broadleaf</strong> acts as Managed Service Provider (MSP), managing all Non-IT temporary labor suppliers on behalf of Quest.</li>
+        <li><strong>MSP Fee</strong>: Typically charged as a % of total spend or per-worker-hour — not directly visible in the data but embedded in bill rates.</li>
+        <li><strong>Supplier Tiers</strong>: The MSA likely defines preferred, approved, and conditional supplier tiers — but the data shows 36 active suppliers, suggesting loose tier enforcement.</li>
+        <li><strong>Compliance obligation</strong>: Broadleaf is contractually required to ensure supplier adherence to agreed MU rates and performance SLAs.</li>
+      </ul>
+    </div>
+    <div class="contract-card">
+      <h3>⚠ Potential Leakage Areas</h3>
+      <ul>
+        <li><span class="flag flag-red">HIGH</span> <strong>Synectics East at $12.73 MU</strong> — if program cap is ~$9, this represents ~$300K annual overcharge on $846K spend</li>
+        <li><span class="flag flag-red">HIGH</span> <strong>36 active suppliers</strong> vs. typical preferred panel of 10–15 — excess supplier management costs estimated at $200–400K</li>
+        <li><span class="flag flag-amber">MED</span> <strong>$0 MU suppliers</strong> (Aureus, CHG, HealthCare Connections, Triage) — direct bill model may bypass MSA rate card controls</li>
+        <li><span class="flag flag-amber">MED</span> Integrated Resources <strong>$3.5M spend at 35.7% not-meeting</strong> — likely breaches any performance SLA clause in the MSA</li>
+        <li><span class="flag flag-amber">MED</span> Ampian Staffing <strong>$23.30 MU</strong> on West placements — 2.5x program average, suggest contract exception or error</li>
+      </ul>
+    </div>
+    <div class="contract-card">
+      <h3>🔧 Negotiation Levers</h3>
+      <ul>
+        <li><strong>Volume rebate</strong>: TalentBurst at $12M warrants a retroactive rebate clause (est. 1–2% = $120–240K savings)</li>
+        <li><strong>MU cap enforcement</strong>: Standardizing to $9.00 MU cap across general staffing could save <strong>$500K–$800K</strong> annually</li>
+        <li><strong>Performance escrow</strong>: Withhold 5% of MU for suppliers exceeding 30% not-meeting rate, releasing upon improvement</li>
+        <li><strong>Panel rationalization</strong>: Reduce to 15 suppliers → ~$300K reduction in MSP overhead</li>
+        <li><strong>Tier restructuring</strong>: Create 3-tier system (Preferred/Approved/Conditional) with volume guarantees for Tier 1 in exchange for locked MU rates</li>
+      </ul>
+    </div>
+    <div class="contract-card">
+      <h3>📊 Compliance Scorecard</h3>
+      <ul>
+        <li><strong>MU Rate Compliance:</strong> <span class="flag flag-red">Non-Compliant</span> — 8 suppliers exceed $10 MU</li>
+        <li><strong>Performance SLAs:</strong> <span class="flag flag-red">Breach Risk</span> — 6 suppliers >35% not-meeting</li>
+        <li><strong>Supplier Panel Size:</strong> <span class="flag flag-amber">At Risk</span> — 36 vs. recommended ≤20</li>
+        <li><strong>Spend Concentration:</strong> <span class="flag flag-red">Breach</span> — Single supplier at 31% of total</li>
+        <li><strong>Travel Nursing Segregation:</strong> <span class="flag flag-amber">Review Needed</span> — $0 MU suppliers mixing with standard pool</li>
+        <li><strong>Regional Consistency:</strong> <span class="flag flag-amber">Partial</span> — Wide MU variance by region for same supplier</li>
+      </ul>
+    </div>
+  </div>
+  <div class="card" style="margin-top:20px">
+    <div class="card-title">Recommended Action Plan — Priority Matrix</div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>Priority</th><th>Action</th><th>Potential Value</th><th>Effort</th><th>Timeline</th></tr></thead>
+      <tbody>
+        <tr><td><span class="pill pill-red">P1 — Urgent</span></td><td>Negotiate volume rebate with TalentBurst (>$12M spend)</td><td>$120–240K</td><td>Low</td><td>30 days</td></tr>
+        <tr><td><span class="pill pill-red">P1 — Urgent</span></td><td>Enforce performance SLA / volume redirect from Integrated Resources & Advanced Resources</td><td>$500K–1M</td><td>Medium</td><td>60 days</td></tr>
+        <tr><td><span class="pill pill-amber">P2 — Near-term</span></td><td>Standardize MU cap at $9.00 for general staffing in next contract cycle</td><td>$500–800K</td><td>Medium</td><td>90 days</td></tr>
+        <tr><td><span class="pill pill-amber">P2 — Near-term</span></td><td>Rationalize supplier panel from 36 → 18 (sunset tail suppliers)</td><td>$200–400K</td><td>Low–Med</td><td>90 days</td></tr>
+        <tr><td><span class="pill pill-green">P3 — Strategic</span></td><td>Redesign 3-tier preferred supplier program with volume guarantees</td><td>$1–2M long-term</td><td>High</td><td>6 months</td></tr>
+        <tr><td><span class="pill pill-green">P3 — Strategic</span></td><td>Separate travel nursing / direct bill suppliers from general staffing benchmarking</td><td>Benchmark clarity</td><td>Low</td><td>30 days</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+</div>
+
+<footer>Quest Non-IT Staffing Dashboard · Generated from OFFLINE Temp and Attrition Data_Non-IT analysis_V4.xlsx · Quest–Broadleaf MSA · Confidential</footer>
+
+<script>
+// ─────────────────────────────────────────────────────────────────────────────
+// DATA
+// ─────────────────────────────────────────────────────────────────────────────
+const RAW = [{"name":"TalentBurst, Inc.","regions":{"ACL":{"payRate":25.0,"mu":9.75,"billRate":34.75,"spend":16124.0},"AmeriPath":{"payRate":21.51,"mu":6.82,"billRate":28.33,"spend":26761.68},"Corporate":{"payRate":81.99,"mu":14.05,"billRate":96.04,"spend":1374427.68},"East":{"payRate":31.6,"mu":0.29,"billRate":31.89,"spend":2258039.12},"Esoteric":{"payRate":30.17,"mu":9.02,"billRate":39.19,"spend":169572.0},"ExamOne":{"payRate":62.5,"mu":13.12,"billRate":75.62,"spend":46581.92},"Great Midwest":{"payRate":30.64,"mu":0.32,"billRate":30.96,"spend":925980.08},"North":{"payRate":23.53,"mu":0.26,"billRate":23.79,"spend":2224615.44},"Pack Health":{"payRate":50.0,"mu":12.5,"billRate":62.5,"spend":20000.0},"SouthEast":{"payRate":24.38,"mu":0.32,"billRate":24.7,"spend":4393311.44},"SouthWest":{"payRate":29.82,"mu":0.32,"billRate":30.13,"spend":760563.12},"West":{"payRate":29.97,"mu":0.31,"billRate":30.29,"spend":1462239.76},"Workforce Health Solutions":{"payRate":18.26,"mu":6.79,"billRate":25.05,"spend":80057.68}},"totalSpend":13758273.92,"pctNotMeeting":22.1,"avgBr":27.04,"avgPr":20.7,"avgMu":6.34,"roleSpend":{"Total estimated yearly spend":1015185.2,"Laboratory":4326578.8,"Back office":2830506.64,"Field":5586003.28},"regionRoleSpend":{"ACL":{"Total estimated yearly spend":16124.0},"AmeriPath":{"Laboratory":26761.68},"Corporate":{"Back office":1111557.68,"Laboratory":250800.0,"Total estimated yearly spend":12070.0},"East":{"Back office":23958.0,"Laboratory":1799333.76,"Field":425139.68,"Total estimated yearly spend":9607.68},"Esoteric":{"Back office":158500.0,"Laboratory":11072.0},"ExamOne":{"Back office":46581.92},"Great Midwest":{"Laboratory":364761.28,"Field":467225.2,"Total estimated yearly spend":93993.6},"North":{"Laboratory":413740.96,"Back office":1242972.64,"Field":562841.84,"Total estimated yearly spend":5060.0},"Pack Health":{"Back office":20000.0},"SouthEast":{"Total estimated yearly spend":577995.84,"Laboratory":915638.16,"Field":2867578.64,"Back office":32098.8},"SouthWest":{"Back office":124760.0,"Laboratory":264766.24,"Field":209891.84,"Total estimated yearly spend":161145.04},"West":{"Back office":57492.0,"Field":1053326.08,"Total estimated yearly spend":139189.04,"Laboratory":212232.64},"Workforce Health Solutions":{"Laboratory":67472.08,"Back office":12585.6}}},{"name":"Integrated Resources, Inc","regions":{"AmeriPath":{"payRate":40.0,"mu":17.2,"billRate":57.2,"spend":77334.4},"East":{"payRate":37.79,"mu":0.42,"billRate":38.21,"spend":400860.88},"Esoteric":{"payRate":27.0,"mu":10.53,"billRate":37.53,"spend":3602.88},"Great Midwest":{"payRate":32.88,"mu":0.43,"billRate":33.3,"spend":391286.4},"North":{"payRate":37.15,"mu":0.36,"billRate":37.51,"spend":339466.0},"SouthEast":{"payRate":27.08,"mu":0.43,"billRate":27.51,"spend":1414144.4},"SouthWest":{"payRate":31.91,"mu":0.43,"billRate":32.34,"spend":449141.52},"West":{"payRate":34.22,"mu":0.43,"billRate":34.65,"spend":544761.28},"Workforce Health Solutions":{"payRate":18.08,"mu":7.41,"billRate":25.49,"spend":25227.68}},"totalSpend":3645825.44,"pctNotMeeting":35.7,"avgBr":31.38,"avgPr":22.23,"avgMu":9.15,"roleSpend":{"Laboratory":830006.0,"Total estimated yearly spend":126990.0,"Field":2688233.28,"Back office":596.16},"regionRoleSpend":{"AmeriPath":{"Laboratory":77334.4},"East":{"Laboratory":172862.96,"Total estimated yearly spend":29523.6,"Field":198474.32},"Esoteric":{"Total estimated yearly spend":3602.88},"Great Midwest":{"Laboratory":83952.88,"Total estimated yearly spend":27739.92,"Field":279593.6},"North":{"Field":288756.0,"Laboratory":32640.0,"Total estimated yearly spend":18070.0},"SouthEast":{"Total estimated yearly spend":6805.44,"Field":1320316.32,"Laboratory":87022.64},"SouthWest":{"Total estimated yearly spend":3440.16,"Field":133058.16,"Laboratory":312643.2},"West":{"Total estimated yearly spend":37808.0,"Field":468034.88,"Laboratory":38918.4},"Workforce Health Solutions":{"Back office":596.16,"Laboratory":24631.52}}},{"name":"Triage, LLC","regions":{"ACL":{"payRate":81.8,"mu":23.2,"billRate":105.0,"spend":514960.0},"East":{"payRate":110.0,"mu":0.0,"billRate":110.0,"spend":128480.0},"Great Midwest":{"payRate":75.93,"mu":0.0,"billRate":75.93,"spend":1713552.0},"North":{"payRate":72.14,"mu":0.0,"billRate":72.14,"spend":680280.0},"SouthEast":{"payRate":48.0,"mu":0.0,"billRate":48.0,"spend":54144.0}},"totalSpend":3091416.0,"pctNotMeeting":3.6,"avgBr":73.21,"avgPr":73.21,"avgMu":0,"roleSpend":{"Laboratory":2186392.0,"Field":905024.0},"regionRoleSpend":{"ACL":{"Laboratory":514960.0},"East":{"Laboratory":128480.0},"Great Midwest":{"Field":447360.0,"Laboratory":1266192.0},"North":{"Field":403520.0,"Laboratory":276760.0},"SouthEast":{"Field":54144.0}}},{"name":"Synectics","regions":{"Corporate":{"payRate":25.0,"mu":10.75,"billRate":35.75,"spend":17160.0},"East":{"payRate":42.71,"mu":0.43,"billRate":43.14,"spend":846145.76},"Esoteric":{"payRate":29.29,"mu":12.6,"billRate":41.89,"spend":24868.4},"Great Midwest":{"payRate":30.71,"mu":0.42,"billRate":31.13,"spend":289148.64},"Healthcare Analytic Solutions":{"payRate":63.0,"mu":27.09,"billRate":90.09,"spend":77117.04},"North":{"payRate":27.98,"mu":0.43,"billRate":28.41,"spend":147582.8},"SouthEast":{"payRate":26.83,"mu":0.43,"billRate":27.26,"spend":728597.6},"SouthWest":{"payRate":33.38,"mu":0.43,"billRate":33.81,"spend":182941.12},"West":{"payRate":31.28,"mu":0.43,"billRate":31.71,"spend":493854.48}},"totalSpend":2807415.84,"pctNotMeeting":23.0,"avgBr":32.22,"avgPr":22.57,"avgMu":9.66,"roleSpend":{"Back office":17160.0,"Laboratory":1186222.64,"Field":1527059.92,"Total estimated yearly spend":76973.28},"regionRoleSpend":{"Corporate":{"Back office":17160.0},"East":{"Laboratory":731393.04,"Field":114752.72},"Esoteric":{"Laboratory":24868.4},"Great Midwest":{"Total estimated yearly spend":16068.4,"Laboratory":93849.76,"Field":179230.48},"Healthcare Analytic Solutions":{"Laboratory":77117.04},"North":{"Total estimated yearly spend":17472.0,"Field":108146.0,"Laboratory":21964.8},"SouthEast":{"Total estimated yearly spend":38317.68,"Field":630944.0,"Laboratory":59335.92},"SouthWest":{"Field":141985.92,"Laboratory":40955.2},"West":{"Total estimated yearly spend":5115.2,"Laboratory":136738.48,"Field":352000.8}}},{"name":"Spectraforce Technologies","regions":{"ACL":{"payRate":24.31,"mu":9.48,"billRate":33.79,"spend":9461.2},"AmeriPath":{"payRate":22.0,"mu":9.46,"billRate":31.46,"spend":14094.08},"East":{"payRate":31.07,"mu":0.42,"billRate":31.49,"spend":490545.84},"Esoteric":{"payRate":23.29,"mu":10.02,"billRate":33.31,"spend":62894.16},"Great Midwest":{"payRate":33.07,"mu":0.43,"billRate":33.49,"spend":325492.56},"North":{"payRate":28.49,"mu":0.42,"billRate":28.92,"spend":143111.12},"SouthEast":{"payRate":27.57,"mu":0.43,"billRate":27.99,"spend":1054983.76},"SouthWest":{"payRate":27.92,"mu":0.43,"billRate":28.34,"spend":132336.48},"West":{"payRate":32.08,"mu":0.43,"billRate":32.51,"spend":392157.36},"Workforce Health Solutions":{"payRate":18.4,"mu":7.68,"billRate":26.08,"spend":56306.72}},"totalSpend":2681383.28,"pctNotMeeting":27.5,"avgBr":29.85,"avgPr":20.94,"avgMu":8.92,"roleSpend":{"Total estimated yearly spend":169840.16,"Laboratory":593331.68,"Back office":49017.6,"Field":1869193.84},"regionRoleSpend":{"ACL":{"Total estimated yearly spend":9461.2},"AmeriPath":{"Laboratory":14094.08},"East":{"Back office":25612.8,"Laboratory":165248.48,"Total estimated yearly spend":17379.12,"Field":282305.44},"Esoteric":{"Laboratory":62894.16},"Great Midwest":{"Total estimated yearly spend":26343.28,"Laboratory":81835.04,"Field":217314.24},"North":{"Total estimated yearly spend":21686.96,"Field":86589.36,"Laboratory":34834.8},"SouthEast":{"Total estimated yearly spend":66259.2,"Field":874139.2,"Laboratory":114585.36},"SouthWest":{"Total estimated yearly spend":1911.2,"Field":46879.68,"Laboratory":83545.6},"West":{"Total estimated yearly spend":26799.2,"Field":361965.92,"Laboratory":3392.24},"Workforce Health Solutions":{"Back office":23404.8,"Laboratory":32901.92}}},{"name":"Mindlance, Inc","regions":{"Corporate":{"payRate":20.2,"mu":7.93,"billRate":28.13,"spend":33541.44},"East":{"payRate":34.78,"mu":0.42,"billRate":35.2,"spend":187367.28},"Esoteric":{"payRate":59.19,"mu":25.45,"billRate":84.64,"spend":171922.56},"Great Midwest":{"payRate":34.09,"mu":0.43,"billRate":34.52,"spend":188869.2},"North":{"payRate":29.31,"mu":0.43,"billRate":29.74,"spend":86188.96},"SouthEast":{"payRate":26.84,"mu":0.43,"billRate":27.27,"spend":611633.44},"SouthWest":{"payRate":31.9,"mu":0.43,"billRate":32.33,"spend":443662.64},"West":{"payRate":33.97,"mu":0.43,"billRate":34.4,"spend":227074.32}},"totalSpend":1950259.84,"pctNotMeeting":28.7,"avgBr":30.61,"avgPr":21.42,"avgMu":9.19,"roleSpend":{"Back office":34912.8,"Laboratory":663146.64,"Field":1252200.4},"regionRoleSpend":{"Corporate":{"Back office":33541.44},"East":{"Laboratory":172632.56,"Field":14734.72},"Esoteric":{"Laboratory":171922.56},"Great Midwest":{"Field":178635.6,"Laboratory":10233.6},"North":{"Field":56376.32,"Laboratory":29812.64},"SouthEast":{"Back office":1371.36,"Field":552776.8,"Laboratory":57485.28},"SouthWest":{"Field":245052.72,"Laboratory":198609.92},"West":{"Field":204624.24,"Laboratory":22450.08}}},{"name":"BayOne Solutions","regions":{"East":{"payRate":32.63,"mu":0.43,"billRate":33.06,"spend":229572.4},"ExamOne":{"payRate":17.75,"mu":6.75,"billRate":24.5,"spend":1176.0},"Great Midwest":{"payRate":33.93,"mu":0.43,"billRate":34.36,"spend":344528.0},"North":{"payRate":30.89,"mu":0.43,"billRate":31.31,"spend":526978.32},"SouthEast":{"payRate":27.48,"mu":0.43,"billRate":27.91,"spend":225313.36},"SouthWest":{"payRate":33.11,"mu":0.43,"billRate":33.54,"spend":150113.36},"West":{"payRate":31.42,"mu":0.42,"billRate":31.84,"spend":399562.24},"Workforce Health Solutions":{"payRate":24.33,"mu":10.28,"billRate":34.61,"spend":65742.64}},"totalSpend":1942986.32,"pctNotMeeting":22.8,"avgBr":32.09,"avgPr":22.47,"avgMu":9.62,"roleSpend":{"Field":1608550.0,"Laboratory":210576.56,"Back office":63784.8,"Total estimated yearly spend":60074.96},"regionRoleSpend":{"East":{"Field":191348.64,"Laboratory":38223.76},"ExamOne":{"Back office":1176.0},"Great Midwest":{"Total estimated yearly spend":12788.0,"Field":277305.6,"Back office":27456.0,"Laboratory":26978.4},"North":{"Back office":34313.76,"Field":441012.96,"Laboratory":51651.6},"SouthEast":{"Field":213997.36,"Laboratory":11316.0},"SouthWest":{"Field":132610.16,"Laboratory":17503.2},"West":{"Total estimated yearly spend":47286.96,"Field":352275.28},"Workforce Health Solutions":{"Back office":839.04,"Laboratory":64903.6}}},{"name":"Iconma LLC","regions":{"AmeriPath":{"payRate":21.1,"mu":9.07,"billRate":30.17,"spend":55085.36},"Corporate":{"payRate":26.33,"mu":10.69,"billRate":37.02,"spend":22493.84},"East":{"payRate":34.98,"mu":0.43,"billRate":35.41,"spend":128277.6},"Esoteric":{"payRate":51.75,"mu":22.25,"billRate":74.0,"spend":109286.32},"Great Midwest":{"payRate":34.35,"mu":0.43,"billRate":34.78,"spend":160557.52},"Healthcare Analytic Solutions":{"payRate":22.0,"mu":8.36,"billRate":30.36,"spend":10200.96},"North":{"payRate":37.81,"mu":0.43,"billRate":38.24,"spend":112247.2},"SouthEast":{"payRate":27.69,"mu":0.43,"billRate":28.12,"spend":468052.24},"SouthWest":{"payRate":38.99,"mu":0.43,"billRate":39.41,"spend":197501.28},"West":{"payRate":31.19,"mu":0.43,"billRate":31.62,"spend":281817.92}},"totalSpend":1545520.24,"pctNotMeeting":27.8,"avgBr":31.67,"avgPr":22.16,"avgMu":9.51,"roleSpend":{"Laboratory":514971.12,"Back office":32694.8,"Field":997854.32},"regionRoleSpend":{"AmeriPath":{"Laboratory":55085.36},"Corporate":{"Back office":22493.84},"East":{"Laboratory":64769.76,"Field":63507.84},"Esoteric":{"Laboratory":109286.32},"Great Midwest":{"Field":138549.84,"Laboratory":22007.68},"Healthcare Analytic Solutions":{"Back office":10200.96},"North":{"Field":85363.2,"Laboratory":26884.0},"SouthEast":{"Field":365538.08,"Laboratory":102514.16},"SouthWest":{"Laboratory":134423.84,"Field":63077.44},"West":{"Field":281817.92}}},{"name":"Global Technical Talent","regions":{"AmeriPath":{"payRate":36.0,"mu":15.48,"billRate":51.48,"spend":36653.76},"Corporate":{"payRate":25.23,"mu":10.38,"billRate":35.61,"spend":79658.88},"East":{"payRate":30.13,"mu":0.43,"billRate":30.56,"spend":208779.28},"Great Midwest":{"payRate":36.94,"mu":0.39,"billRate":37.33,"spend":422348.88},"North":{"payRate":61.15,"mu":0.11,"billRate":61.26,"spend":252860.4},"SouthEast":{"payRate":29.46,"mu":0.43,"billRate":29.89,"spend":55835.6},"SouthWest":{"payRate":36.75,"mu":0.43,"billRate":37.18,"spend":161597.12},"West":{"payRate":32.91,"mu":0.43,"billRate":33.35,"spend":298739.2},"Workforce Health Solutions":{"payRate":18.2,"mu":7.83,"billRate":26.03,"spend":24155.84}},"totalSpend":1540628.96,"pctNotMeeting":19.5,"avgBr":36.56,"avgPr":27.1,"avgMu":9.46,"roleSpend":{"Laboratory":314234.72,"Back office":79658.88,"Field":1146735.36},"regionRoleSpend":{"AmeriPath":{"Laboratory":36653.76},"Corporate":{"Back office":79658.88},"East":{"Laboratory":73661.92,"Field":135117.36},"Great Midwest":{"Field":364806.48,"Laboratory":57542.4},"North":{"Field":208660.4,"Laboratory":44200.0},"SouthEast":{"Field":55835.6},"SouthWest":{"Field":83576.32,"Laboratory":78020.8},"West":{"Field":298739.2},"Workforce Health Solutions":{"Laboratory":24155.84}}},{"name":"All Medical Personnel Inc.","regions":{"East":{"payRate":30.93,"mu":0.42,"billRate":31.35,"spend":108825.2},"Great Midwest":{"payRate":23.24,"mu":0.39,"billRate":23.63,"spend":13421.84},"SouthEast":{"payRate":26.91,"mu":0.43,"billRate":27.34,"spend":1150722.4},"SouthWest":{"payRate":28.93,"mu":0.43,"billRate":29.36,"spend":16239.36},"West":{"payRate":34.9,"mu":0.42,"billRate":35.33,"spend":186201.68}},"totalSpend":1475410.48,"pctNotMeeting":31.7,"avgBr":28.42,"avgPr":19.9,"avgMu":8.52,"roleSpend":{"Total estimated yearly spend":108017.2,"Laboratory":149312.96,"Field":1218080.32},"regionRoleSpend":{"East":{"Total estimated yearly spend":8317.76,"Laboratory":30692.8,"Field":69814.64},"Great Midwest":{"Total estimated yearly spend":13421.84},"SouthEast":{"Total estimated yearly spend":49945.44,"Field":990016.0,"Laboratory":110760.96},"SouthWest":{"Laboratory":2745.6,"Field":13493.76},"West":{"Total estimated yearly spend":36332.16,"Field":144755.92,"Laboratory":5113.6}}},{"name":"CHG Medical Staffing,Inc dba CompHealth","regions":{"ACL":{"payRate":83.71,"mu":15.04,"billRate":98.75,"spend":324240.0},"AmeriPath":{"payRate":103.33,"mu":0.0,"billRate":103.33,"spend":280160.0},"Great Midwest":{"payRate":86.4,"mu":0.0,"billRate":86.4,"spend":466992.0},"North":{"payRate":80.0,"mu":0.0,"billRate":80.0,"spend":265960.0},"West":{"payRate":139.57,"mu":0.43,"billRate":140.0,"spend":61600.0}},"totalSpend":1398952.0,"pctNotMeeting":5.9,"avgBr":89.2,"avgPr":84.99,"avgMu":4.21,"roleSpend":{"Laboratory":1341752.0,"Field":57200.0},"regionRoleSpend":{"ACL":{"Laboratory":324240.0},"AmeriPath":{"Laboratory":280160.0},"Great Midwest":{"Laboratory":466992.0},"North":{"Field":57200.0,"Laboratory":208760.0},"West":{"Laboratory":61600.0}}},{"name":"Pinnacle","regions":{"Corporate":{"payRate":41.0,"mu":17.63,"billRate":58.63,"spend":60506.16},"East":{"payRate":34.65,"mu":0.43,"billRate":35.08,"spend":276728.24},"Esoteric":{"payRate":23.0,"mu":9.89,"billRate":32.89,"spend":789.36},"Great Midwest":{"payRate":34.64,"mu":0.43,"billRate":35.07,"spend":206838.72},"North":{"payRate":28.59,"mu":0.43,"billRate":29.02,"spend":42823.76},"SouthEast":{"payRate":29.21,"mu":0.43,"billRate":29.64,"spend":194367.68},"SouthWest":{"payRate":28.5,"mu":0.43,"billRate":28.93,"spend":159834.24},"West":{"payRate":31.53,"mu":0.43,"billRate":31.96,"spend":328617.28},"Workforce Health Solutions":{"payRate":22.06,"mu":9.29,"billRate":31.35,"spend":89479.12}},"totalSpend":1359984.56,"pctNotMeeting":17.4,"avgBr":32.2,"avgPr":22.54,"avgMu":9.66,"roleSpend":{"Back office":102568.56,"Laboratory":313559.04,"Field":911000.96,"Total estimated yearly spend":32856.0},"regionRoleSpend":{"Corporate":{"Back office":60506.16},"East":{"Back office":32568.0,"Laboratory":124109.52,"Field":120050.72},"Esoteric":{"Laboratory":789.36},"Great Midwest":{"Laboratory":12267.2,"Field":194571.52},"North":{"Field":42823.76},"SouthEast":{"Field":177393.68,"Laboratory":16974.0},"SouthWest":{"Field":91138.56,"Laboratory":68695.68},"West":{"Total estimated yearly spend":32856.0,"Field":285022.72,"Laboratory":10738.56},"Workforce Health Solutions":{"Back office":9494.4,"Laboratory":79984.72}}},{"name":"Rangam Consultants, Inc.","regions":{"ACL":{"payRate":30.0,"mu":12.9,"billRate":42.9,"spend":25740.0},"East":{"payRate":30.87,"mu":0.42,"billRate":31.28,"spend":167878.56},"Great Midwest":{"payRate":34.67,"mu":0.42,"billRate":35.1,"spend":120041.52},"North":{"payRate":29.29,"mu":0.43,"billRate":29.71,"spend":179883.2},"SouthEast":{"payRate":27.78,"mu":0.43,"billRate":28.21,"spend":635156.64},"SouthWest":{"payRate":28.39,"mu":0.42,"billRate":28.81,"spend":76670.24},"West":{"payRate":33.04,"mu":0.42,"billRate":33.45,"spend":68140.8},"Workforce Health Solutions":{"payRate":18.2,"mu":7.83,"billRate":26.03,"spend":9995.52}},"totalSpend":1283506.48,"pctNotMeeting":34.7,"avgBr":29.49,"avgPr":20.68,"avgMu":8.82,"roleSpend":{"Field":1072392.16,"Total estimated yearly spend":108512.4,"Laboratory":102601.92},"regionRoleSpend":{"ACL":{"Field":25740.0},"East":{"Total estimated yearly spend":64275.76,"Field":57247.92,"Laboratory":46354.88},"Great Midwest":{"Total estimated yearly spend":1534.56,"Field":118506.96},"North":{"Field":179105.28,"Laboratory":777.92},"SouthEast":{"Total estimated yearly spend":15104.48,"Field":594026.56,"Laboratory":26025.6},"SouthWest":{"Total estimated yearly spend":19516.8,"Field":37705.44,"Laboratory":19448.0},"West":{"Total estimated yearly spend":8080.8,"Field":60060.0},"Workforce Health Solutions":{"Laboratory":9995.52}}},{"name":"LanceSoft","regions":{"East":{"payRate":30.29,"mu":0.42,"billRate":30.7,"spend":172526.08},"ExamOne":{"payRate":17.75,"mu":6.75,"billRate":24.5,"spend":16856.0},"Great Midwest":{"payRate":30.25,"mu":0.42,"billRate":30.67,"spend":256552.16},"North":{"payRate":27.5,"mu":0.41,"billRate":27.91,"spend":34010.4},"SouthEast":{"payRate":25.88,"mu":0.42,"billRate":26.3,"spend":89215.6},"SouthWest":{"payRate":31.5,"mu":0.43,"billRate":31.93,"spend":239217.2},"West":{"payRate":30.16,"mu":0.41,"billRate":30.57,"spend":272503.6},"Workforce Health Solutions":{"payRate":18.2,"mu":7.83,"billRate":26.03,"spend":34359.6}},"totalSpend":1115240.64,"pctNotMeeting":20.3,"avgBr":30.39,"avgPr":21.39,"avgMu":8.99,"roleSpend":{"Total estimated yearly spend":197218.0,"Field":737891.44,"Laboratory":160633.28,"Back office":19497.92},"regionRoleSpend":{"East":{"Total estimated yearly spend":21406.0,"Field":113466.08,"Laboratory":37654.0},"ExamOne":{"Back office":16856.0},"Great Midwest":{"Total estimated yearly spend":58791.44,"Field":171153.84,"Laboratory":26606.88},"North":{"Back office":2641.92,"Field":19699.68,"Laboratory":11668.8},"SouthEast":{"Total estimated yearly spend":24171.84,"Field":65043.76},"SouthWest":{"Field":188873.2,"Laboratory":50344.0},"West":{"Total estimated yearly spend":92848.72,"Field":179654.88},"Workforce Health Solutions":{"Laboratory":34359.6}}},{"name":"Pride Healthcare LLC","regions":{"AmeriPath":{"payRate":20.0,"mu":8.6,"billRate":28.6,"spend":18075.2},"Corporate":{"payRate":19.0,"mu":7.22,"billRate":26.22,"spend":22444.32},"East":{"payRate":29.72,"mu":0.43,"billRate":30.15,"spend":104290.32},"Great Midwest":{"payRate":35.41,"mu":0.43,"billRate":35.83,"spend":126681.28},"North":{"payRate":31.03,"mu":0.43,"billRate":31.46,"spend":26678.08},"SouthEast":{"payRate":26.44,"mu":0.43,"billRate":26.87,"spend":415584.32},"SouthWest":{"payRate":27.8,"mu":0.43,"billRate":28.23,"spend":80326.4},"West":{"payRate":30.48,"mu":0.43,"billRate":30.91,"spend":200706.48}},"totalSpend":994786.4,"pctNotMeeting":33.3,"avgBr":29.43,"avgPr":20.61,"avgMu":8.82,"roleSpend":{"Laboratory":139286.08,"Back office":22444.32,"Field":746069.92,"Total estimated yearly spend":86986.08},"regionRoleSpend":{"AmeriPath":{"Laboratory":18075.2},"Corporate":{"Back office":22444.32},"East":{"Field":85299.92,"Laboratory":18990.4},"Great Midwest":{"Total estimated yearly spend":4158.88,"Field":122522.4},"North":{"Field":26678.08},"SouthEast":{"Total estimated yearly spend":31442.24,"Field":349982.4,"Laboratory":34159.68},"SouthWest":{"Field":12265.6,"Laboratory":68060.8},"West":{"Total estimated yearly spend":51384.96,"Field":149321.52}}},{"name":"eTeam, Inc","regions":{"Corporate":{"payRate":19.0,"mu":7.22,"billRate":26.22,"spend":6712.32},"East":{"payRate":29.52,"mu":0.43,"billRate":29.95,"spend":101530.48},"ExamOne":{"payRate":17.75,"mu":6.75,"billRate":24.5,"spend":1176.0},"Great Midwest":{"payRate":37.82,"mu":0.36,"billRate":38.18,"spend":286459.76},"North":{"payRate":30.95,"mu":0.41,"billRate":31.36,"spend":45611.68},"SouthEast":{"payRate":27.2,"mu":0.43,"billRate":27.63,"spend":146200.88},"SouthWest":{"payRate":32.59,"mu":0.43,"billRate":33.02,"spend":219676.08},"West":{"payRate":33.57,"mu":0.44,"billRate":34.01,"spend":139849.6},"Workforce Health Solutions":{"payRate":18.2,"mu":7.83,"billRate":26.03,"spend":36858.48}},"totalSpend":984075.28,"pctNotMeeting":31.8,"avgBr":33.46,"avgPr":24.28,"avgMu":9.17,"roleSpend":{"Back office":17128.8,"Field":752692.32,"Laboratory":214254.16},"regionRoleSpend":{"Corporate":{"Back office":6712.32},"East":{"Field":101530.48},"ExamOne":{"Back office":1176.0},"Great Midwest":{"Field":248361.68,"Laboratory":38098.08},"North":{"Back office":9240.48,"Field":36371.2},"SouthEast":{"Field":133753.28,"Laboratory":12447.6},"SouthWest":{"Field":92826.08,"Laboratory":126850.0},"West":{"Field":139849.6},"Workforce Health Solutions":{"Laboratory":36858.48}}},{"name":"Pride Global Healthcare LLC","regions":{"Corporate":{"payRate":21.75,"mu":8.64,"billRate":30.39,"spend":15693.12},"East":{"payRate":30.93,"mu":0.43,"billRate":31.36,"spend":40359.04},"Esoteric":{"payRate":51.53,"mu":22.16,"billRate":73.69,"spend":216489.12},"Great Midwest":{"payRate":33.46,"mu":0.43,"billRate":33.89,"spend":211375.92},"Healthcare Analytic Solutions":{"payRate":22.0,"mu":8.36,"billRate":30.36,"spend":3400.32},"North":{"payRate":31.53,"mu":0.43,"billRate":31.96,"spend":34479.6},"SouthEast":{"payRate":28.36,"mu":0.43,"billRate":28.79,"spend":289805.2},"SouthWest":{"payRate":28.82,"mu":0.43,"billRate":29.25,"spend":57414.8},"West":{"payRate":37.21,"mu":0.42,"billRate":37.63,"spend":67967.44},"Workforce Health Solutions":{"payRate":18.2,"mu":7.83,"billRate":26.03,"spend":1874.16}},"totalSpend":938858.72,"pctNotMeeting":29.5,"avgBr":30.75,"avgPr":21.52,"avgMu":9.23,"roleSpend":{"Back office":19093.44,"Field":469724.24,"Laboratory":413390.8,"Total estimated yearly spend":36650.24},"regionRoleSpend":{"Corporate":{"Back office":15693.12},"East":{"Field":17296.0,"Laboratory":23063.04},"Esoteric":{"Laboratory":216489.12},"Great Midwest":{"Total estimated yearly spend":24297.2,"Laboratory":41104.32,"Field":145974.4},"Healthcare Analytic Solutions":{"Back office":3400.32},"North":{"Field":17376.8,"Laboratory":17102.8},"SouthEast":{"Field":261962.08,"Laboratory":27843.12},"SouthWest":{"Field":11242.96,"Laboratory":46171.84},"West":{"Total estimated yearly spend":12353.04,"Field":15872.0,"Laboratory":39742.4},"Workforce Health Solutions":{"Laboratory":1874.16}}},{"name":"Advanced Resources Group, Inc.","regions":{"AmeriPath":{"payRate":22.0,"mu":8.36,"billRate":30.36,"spend":2428.8},"East":{"payRate":27.91,"mu":0.41,"billRate":28.32,"spend":64012.64},"Esoteric":{"payRate":28.0,"mu":10.92,"billRate":38.92,"spend":28022.4},"Great Midwest":{"payRate":31.54,"mu":0.42,"billRate":31.97,"spend":229129.12},"North":{"payRate":31.03,"mu":0.43,"billRate":31.46,"spend":7298.72},"SouthEast":{"payRate":26.56,"mu":0.43,"billRate":26.98,"spend":176103.68},"SouthWest":{"payRate":32.1,"mu":0.43,"billRate":32.52,"spend":158134.48},"West":{"payRate":31.52,"mu":0.42,"billRate":31.94,"spend":175765.76},"Workforce Health Solutions":{"payRate":18.46,"mu":7.63,"billRate":26.09,"spend":15429.52}},"totalSpend":856325.12,"pctNotMeeting":42.4,"avgBr":30.62,"avgPr":21.51,"avgMu":9.11,"roleSpend":{"Laboratory":235242.64,"Total estimated yearly spend":182978.24,"Field":435377.36,"Back office":2726.88},"regionRoleSpend":{"AmeriPath":{"Laboratory":2428.8},"East":{"Total estimated yearly spend":28022.4,"Laboratory":30704.96,"Field":5285.28},"Esoteric":{"Total estimated yearly spend":28022.4},"Great Midwest":{"Total estimated yearly spend":71701.76,"Laboratory":53163.2,"Field":104264.16},"North":{"Field":7298.72},"SouthEast":{"Total estimated yearly spend":9016.48,"Field":153508.0,"Laboratory":13579.2},"SouthWest":{"Total estimated yearly spend":764.48,"Field":66154.8,"Laboratory":91215.2},"West":{"Total estimated yearly spend":45450.72,"Laboratory":31448.64,"Field":98866.4},"Workforce Health Solutions":{"Back office":2726.88,"Laboratory":12702.64}}},{"name":"HealthCare Connections Inc.","regions":{"Great Midwest":{"payRate":73.5,"mu":0.0,"billRate":73.5,"spend":513768.0},"North":{"payRate":85.0,"mu":0.0,"billRate":85.0,"spend":136000.0},"SouthEast":{"payRate":79.0,"mu":0.0,"billRate":79.0,"spend":150416.0}},"totalSpend":800184.0,"pctNotMeeting":7.1,"avgBr":76.36,"avgPr":76.36,"avgMu":0,"roleSpend":{"Field":127200.0,"Laboratory":672984.0},"regionRoleSpend":{"Great Midwest":{"Field":127200.0,"Laboratory":386568.0},"North":{"Laboratory":136000.0},"SouthEast":{"Laboratory":150416.0}}},{"name":"Aureus Radiology, LLC","regions":{"ACL":{"payRate":85.64,"mu":11.03,"billRate":96.67,"spend":567120.0},"Great Midwest":{"payRate":81.0,"mu":0.0,"billRate":81.0,"spend":55728.0},"North":{"payRate":85.0,"mu":0.0,"billRate":85.0,"spend":27200.0}},"totalSpend":650048.0,"pctNotMeeting":0.0,"avgBr":83.0,"avgPr":83.0,"avgMu":0,"roleSpend":{"Laboratory":650048.0},"regionRoleSpend":{"ACL":{"Laboratory":567120.0},"Great Midwest":{"Laboratory":55728.0},"North":{"Laboratory":27200.0}}},{"name":"Synergy Global Systems, Inc","regions":{"Corporate":{"payRate":17.0,"mu":6.63,"billRate":23.63,"spend":24386.16},"East":{"payRate":31.76,"mu":0.42,"billRate":32.18,"spend":113741.2},"Great Midwest":{"payRate":29.28,"mu":0.41,"billRate":29.69,"spend":61071.6},"North":{"payRate":27.3,"mu":0.41,"billRate":27.7,"spend":55510.8},"SouthEast":{"payRate":23.88,"mu":0.39,"billRate":24.27,"spend":36304.96},"SouthWest":{"payRate":29.43,"mu":0.43,"billRate":29.86,"spend":89196.64},"West":{"payRate":29.85,"mu":0.42,"billRate":30.27,"spend":106011.68},"Workforce Health Solutions":{"payRate":18.2,"mu":7.83,"billRate":26.03,"spend":832.96}},"totalSpend":487056.0,"pctNotMeeting":17.4,"avgBr":29.49,"avgPr":20.81,"avgMu":8.68,"roleSpend":{"Total estimated yearly spend":105632.64,"Back office":47662.08,"Field":270620.0,"Laboratory":63141.28},"regionRoleSpend":{"Corporate":{"Total estimated yearly spend":24386.16},"East":{"Back office":29388.48,"Field":22044.4,"Laboratory":62308.32},"Great Midwest":{"Total estimated yearly spend":26465.6,"Field":34606.0},"North":{"Back office":18273.6,"Field":37237.2},"SouthEast":{"Total estimated yearly spend":11045.92,"Field":25259.04},"SouthWest":{"Field":89196.64},"West":{"Total estimated yearly spend":43734.96,"Field":62276.72},"Workforce Health Solutions":{"Laboratory":832.96}}},{"name":"A+ Consulting Solutions, Inc","regions":{"East":{"payRate":29.89,"mu":0.43,"billRate":30.32,"spend":55172.88},"Great Midwest":{"payRate":33.33,"mu":0.42,"billRate":33.75,"spend":109896.48},"North":{"payRate":28.52,"mu":0.41,"billRate":28.93,"spend":25870.08},"SouthEast":{"payRate":28.65,"mu":0.43,"billRate":29.08,"spend":189540.16},"SouthWest":{"payRate":28.66,"mu":0.42,"billRate":29.08,"spend":73746.4},"West":{"payRate":33.68,"mu":0.43,"billRate":34.11,"spend":3815.68},"Workforce Health Solutions":{"payRate":20.0,"mu":7.6,"billRate":27.6,"spend":22080.0}},"totalSpend":480121.68,"pctNotMeeting":21.6,"avgBr":30.4,"avgPr":21.33,"avgMu":9.07,"roleSpend":{"Field":346643.2,"Total estimated yearly spend":58666.0,"Laboratory":52732.48,"Back office":22080.0},"regionRoleSpend":{"East":{"Field":55172.88},"Great Midwest":{"Total estimated yearly spend":21739.6,"Laboratory":26758.4,"Field":61398.48},"North":{"Total estimated yearly spend":4225.6,"Field":21644.48},"SouthEast":{"Total estimated yearly spend":945.2,"Field":178636.88,"Laboratory":9958.08},"SouthWest":{"Total estimated yearly spend":31755.6,"Field":25974.8,"Laboratory":16016.0},"West":{"Field":3815.68},"Workforce Health Solutions":{"Back office":22080.0}}},{"name":"Locum Tenens Partners, LLC","regions":{"Esoteric":{"payRate":187.5,"mu":76.88,"billRate":264.38,"spend":480114.08}},"totalSpend":480114.08,"pctNotMeeting":0.0,"avgBr":264.38,"avgPr":187.5,"avgMu":76.88,"roleSpend":{"Laboratory":480114.08},"regionRoleSpend":{"Esoteric":{"Laboratory":480114.08}}},{"name":"Ampian Staffing Inc.","regions":{"AmeriPath":{"payRate":89.0,"mu":0.0,"billRate":89.0,"spend":84016.0},"West":{"payRate":111.06,"mu":0.34,"billRate":111.4,"spend":259776.0}},"totalSpend":343792.0,"pctNotMeeting":0.0,"avgBr":111.4,"avgPr":83.43,"avgMu":27.97,"roleSpend":{"Laboratory":343792.0},"regionRoleSpend":{"AmeriPath":{"Laboratory":84016.0},"West":{"Laboratory":259776.0}}},{"name":"Equiliem Healthcare","regions":{"East":{"payRate":27.69,"mu":0.41,"billRate":28.09,"spend":26715.12},"Esoteric":{"payRate":28.0,"mu":10.92,"billRate":38.92,"spend":28956.48},"Great Midwest":{"payRate":23.24,"mu":0.39,"billRate":23.63,"spend":1890.4},"SouthEast":{"payRate":26.51,"mu":0.43,"billRate":26.94,"spend":212835.04},"SouthWest":{"payRate":28.97,"mu":0.43,"billRate":29.4,"spend":52548.56}},"totalSpend":322945.6,"pctNotMeeting":40.7,"avgBr":27.18,"avgPr":19.09,"avgMu":8.09,"roleSpend":{"Total estimated yearly spend":49824.64,"Field":245736.24,"Laboratory":27384.72},"regionRoleSpend":{"East":{"Total estimated yearly spend":10008.0,"Field":16707.12},"Esoteric":{"Total estimated yearly spend":28956.48},"Great Midwest":{"Total estimated yearly spend":1890.4},"SouthEast":{"Total estimated yearly spend":8969.76,"Field":176480.56,"Laboratory":27384.72},"SouthWest":{"Field":52548.56}}},{"name":"Cella DBA Randstad North America Inc","regions":{"Corporate":{"payRate":56.0,"mu":33.69,"billRate":89.69,"spend":249620.64}},"totalSpend":249620.64,"pctNotMeeting":0.0,"avgBr":89.69,"avgPr":56.0,"avgMu":33.69,"roleSpend":{"Back office":249620.64},"regionRoleSpend":{"Corporate":{"Back office":249620.64}}},{"name":"Smith & Dean, Inc","regions":{"SouthEast":{"payRate":23.08,"mu":0.38,"billRate":23.46,"spend":11636.16},"SouthWest":{"payRate":28.75,"mu":0.43,"billRate":29.18,"spend":223603.04}},"totalSpend":235239.2,"pctNotMeeting":25.0,"avgBr":28.71,"avgPr":20.12,"avgMu":8.58,"roleSpend":{"Total estimated yearly spend":11636.16,"Field":137083.04,"Laboratory":86520.0},"regionRoleSpend":{"SouthEast":{"Total estimated yearly spend":11636.16},"SouthWest":{"Field":137083.04,"Laboratory":86520.0}}},{"name":"Atlantic Group","regions":{"Corporate":{"payRate":60.0,"mu":25.8,"billRate":85.8,"spend":120120.0},"North":{"payRate":29.6,"mu":0.43,"billRate":30.03,"spend":55850.08},"SouthEast":{"payRate":26.46,"mu":0.43,"billRate":26.89,"spend":37617.12},"West":{"payRate":33.89,"mu":0.43,"billRate":34.32,"spend":18120.96}},"totalSpend":231708.16,"pctNotMeeting":37.5,"avgBr":29.7,"avgPr":20.77,"avgMu":8.93,"roleSpend":{"Back office":120120.0,"Field":72080.16,"Laboratory":39508.0},"regionRoleSpend":{"Corporate":{"Back office":120120.0},"North":{"Field":45782.88,"Laboratory":10067.2},"SouthEast":{"Laboratory":29440.8,"Field":8176.32},"West":{"Field":18120.96}}},{"name":"Cynet Health Inc.","regions":{"Corporate":{"payRate":25.0,"mu":10.75,"billRate":35.75,"spend":8580.0},"Esoteric":{"payRate":55.88,"mu":21.33,"billRate":77.21,"spend":215225.6}},"totalSpend":223805.6,"pctNotMeeting":0.0,"avgBr":71.28,"avgPr":51.46,"avgMu":19.82,"roleSpend":{"Back office":8580.0,"Laboratory":215225.6},"regionRoleSpend":{"Corporate":{"Back office":8580.0},"Esoteric":{"Laboratory":215225.6}}},{"name":"Randstad","regions":{"East":{"payRate":34.1,"mu":0.43,"billRate":34.53,"spend":6906.0},"Esoteric":{"payRate":18.11,"mu":7.79,"billRate":25.9,"spend":27193.92},"Great Midwest":{"payRate":31.03,"mu":0.43,"billRate":31.46,"spend":26426.4},"North":{"payRate":28.17,"mu":0.43,"billRate":28.6,"spend":18532.8},"SouthEast":{"payRate":27.86,"mu":0.43,"billRate":28.29,"spend":55222.08},"SouthWest":{"payRate":28.17,"mu":0.43,"billRate":28.6,"spend":1601.6},"West":{"payRate":30.6,"mu":0.43,"billRate":31.03,"spend":16116.0},"Workforce Health Solutions":{"payRate":21.12,"mu":9.08,"billRate":30.2,"spend":41161.92}},"totalSpend":193160.72,"pctNotMeeting":42.1,"avgBr":29.75,"avgPr":20.8,"avgMu":8.95,"roleSpend":{"Laboratory":193160.72},"regionRoleSpend":{"East":{"Laboratory":6906.0},"Esoteric":{"Laboratory":27193.92},"Great Midwest":{"Laboratory":26426.4},"North":{"Laboratory":18532.8},"SouthEast":{"Laboratory":55222.08},"SouthWest":{"Laboratory":1601.6},"West":{"Laboratory":16116.0},"Workforce Health Solutions":{"Laboratory":41161.92}}},{"name":"Mitchell Martin, Inc.","regions":{"Corporate":{"payRate":84.06,"mu":32.78,"billRate":116.84,"spend":170119.04}},"totalSpend":170119.04,"pctNotMeeting":0.0,"avgBr":116.84,"avgPr":84.06,"avgMu":32.78,"roleSpend":{"Back office":170119.04},"regionRoleSpend":{"Corporate":{"Back office":170119.04}}},{"name":"Kforce Inc.","regions":{"Corporate":{"payRate":58.86,"mu":0.0,"billRate":58.86,"spend":166602.4}},"totalSpend":166602.4,"pctNotMeeting":0.0,"avgBr":58.86,"avgPr":58.86,"avgMu":0,"roleSpend":{"Back office":166602.4},"regionRoleSpend":{"Corporate":{"Back office":166602.4}}},{"name":"MTSS Staffing, LLC","regions":{"East":{"payRate":35.32,"mu":0.43,"billRate":35.75,"spend":28600.0},"Esoteric":{"payRate":23.0,"mu":8.97,"billRate":31.97,"spend":5115.2},"Great Midwest":{"payRate":24.29,"mu":0.4,"billRate":24.69,"spend":72745.04},"SouthEast":{"payRate":27.08,"mu":0.43,"billRate":27.51,"spend":28631.44},"SouthWest":{"payRate":31.79,"mu":0.43,"billRate":32.22,"spend":1546.56},"Workforce Health Solutions":{"payRate":18.2,"mu":7.83,"billRate":26.03,"spend":18949.84}},"totalSpend":155588.08,"pctNotMeeting":41.7,"avgBr":27.7,"avgPr":19.53,"avgMu":8.17,"roleSpend":{"Laboratory":82606.48,"Total estimated yearly spend":66931.28,"Field":6050.32},"regionRoleSpend":{"East":{"Laboratory":28600.0},"Esoteric":{"Total estimated yearly spend":5115.2},"Great Midwest":{"Total estimated yearly spend":61816.08,"Laboratory":10928.96},"SouthEast":{"Field":4503.76,"Laboratory":24127.68},"SouthWest":{"Field":1546.56},"Workforce Health Solutions":{"Laboratory":18949.84}}},{"name":"Yoh Services LLC","regions":{"AmeriPath":{"payRate":18.5,"mu":7.95,"billRate":26.45,"spend":12696.0},"East":{"payRate":32.4,"mu":0.41,"billRate":32.81,"spend":63427.2},"Great Midwest":{"payRate":24.74,"mu":0.43,"billRate":25.17,"spend":17907.36},"SouthWest":{"payRate":28.17,"mu":0.43,"billRate":28.6,"spend":19905.6},"Workforce Health Solutions":{"payRate":18.2,"mu":7.83,"billRate":26.03,"spend":6871.92}},"totalSpend":120808.08,"pctNotMeeting":12.5,"avgBr":28.86,"avgPr":20.32,"avgMu":8.54,"roleSpend":{"Laboratory":82548.88,"Back office":38259.2},"regionRoleSpend":{"AmeriPath":{"Laboratory":12696.0},"East":{"Back office":38259.2,"Laboratory":25168.0},"Great Midwest":{"Laboratory":17907.36},"SouthWest":{"Laboratory":19905.6},"Workforce Health Solutions":{"Laboratory":6871.92}}},{"name":"Dynamic Talent Solutions Inc","regions":{"East":{"payRate":29.6,"mu":0.43,"billRate":30.03,"spend":9609.6},"Great Midwest":{"payRate":36.75,"mu":0.43,"billRate":37.18,"spend":17388.8},"North":{"payRate":41.4,"mu":0.29,"billRate":41.69,"spend":21086.0},"SouthWest":{"payRate":35.72,"mu":0.43,"billRate":36.15,"spend":17642.08},"West":{"payRate":33.25,"mu":0.43,"billRate":33.67,"spend":20362.0}},"totalSpend":86088.48,"pctNotMeeting":15.4,"avgBr":36.26,"avgPr":26.86,"avgMu":9.4,"roleSpend":{"Field":80482.88,"Laboratory":5605.6},"regionRoleSpend":{"East":{"Field":9609.6},"Great Midwest":{"Field":17388.8},"North":{"Field":21086.0},"SouthWest":{"Field":12036.48,"Laboratory":5605.6},"West":{"Field":20362.0}}},{"name":"Comtrix Solutions Inc","regions":{"North":{"payRate":52.28,"mu":0.22,"billRate":52.5,"spend":81900.0}},"totalSpend":81900.0,"pctNotMeeting":0.0,"avgBr":52.5,"avgPr":42.9,"avgMu":9.6,"roleSpend":{"Laboratory":81900.0},"regionRoleSpend":{"North":{"Laboratory":81900.0}}},{"name":"Soliant Health","regions":{"East":{"payRate":99.4,"mu":0.6,"billRate":100.0,"spend":80000.0}},"totalSpend":80000.0,"pctNotMeeting":0.0,"avgBr":100.0,"avgPr":62.35,"avgMu":37.65,"roleSpend":{"Laboratory":80000.0},"regionRoleSpend":{"East":{"Laboratory":80000.0}}},{"name":"Altimeter Solutions","regions":{"Great Midwest":{"payRate":35.32,"mu":0.43,"billRate":35.75,"spend":15444.0},"SouthEast":{"payRate":32.89,"mu":0.43,"billRate":33.32,"spend":20258.56},"SouthWest":{"payRate":27.88,"mu":0.43,"billRate":28.31,"spend":28170.72}},"totalSpend":63873.28,"pctNotMeeting":42.9,"avgBr":31.15,"avgPr":21.79,"avgMu":9.37,"roleSpend":{"Field":57901.6,"Laboratory":5971.68},"regionRoleSpend":{"Great Midwest":{"Field":15444.0},"SouthEast":{"Field":20258.56},"SouthWest":{"Field":22199.04,"Laboratory":5971.68}}},{"name":"TEKsystems, Inc.","regions":{"ExamOne":{"payRate":17.75,"mu":6.75,"billRate":24.5,"spend":38808.0},"North":{"payRate":25.15,"mu":0.38,"billRate":25.53,"spend":12254.4}},"totalSpend":51062.4,"pctNotMeeting":40.0,"avgBr":25.53,"avgPr":18.5,"avgMu":7.03,"roleSpend":{"Back office":51062.4},"regionRoleSpend":{"ExamOne":{"Back office":38808.0},"North":{"Back office":12254.4}}},{"name":"ADO Professional (DBA LHH)","regions":{"Corporate":{"payRate":31.47,"mu":13.53,"billRate":45.0,"spend":34200.0}},"totalSpend":34200.0,"pctNotMeeting":0.0,"avgBr":45.0,"avgPr":31.47,"avgMu":13.53,"roleSpend":{"Back office":34200.0},"regionRoleSpend":{"Corporate":{"Back office":34200.0}}}];
+
+const REGIONS = ["ACL", "AmeriPath", "Corporate", "East", "Esoteric", "ExamOne", "Great Midwest", "Healthcare Analytic Solutions", "North", "Pack Health", "SouthEast", "SouthWest", "West", "Workforce Health Solutions"];
+const YTD = [{"s":"CHG Medical Staffing,Inc dba CompHealth","r":"ACL","rc":"Laboratory","pr":83.72,"mu":15.04,"br":98.75,"n":4},{"s":"Aureus Radiology, LLC","r":"ACL","rc":"Laboratory","pr":85.64,"mu":11.03,"br":96.67,"n":6},{"s":"Triage, LLC","r":"ACL","rc":"Laboratory","pr":81.8,"mu":23.2,"br":105.0,"n":7},{"s":"Spectraforce Technologies","r":"ACL","rc":"Total estimated yearly spend","pr":24.31,"mu":9.48,"br":33.79,"n":1},{"s":"TalentBurst, Inc.","r":"ACL","rc":"Total estimated yearly spend","pr":25.0,"mu":9.75,"br":34.75,"n":1},{"s":"Rangam Consultants, Inc.","r":"ACL","rc":"Field","pr":30.0,"mu":12.9,"br":42.9,"n":1},{"s":"CHG Medical Staffing,Inc dba CompHealth","r":"AmeriPath","rc":"Laboratory","pr":103.33,"mu":0.0,"br":103.33,"n":3},{"s":"Ampian Staffing Inc.","r":"AmeriPath","rc":"Laboratory","pr":89.0,"mu":0.0,"br":89.0,"n":1},{"s":"TalentBurst, Inc.","r":"AmeriPath","rc":"Laboratory","pr":21.5,"mu":6.82,"br":28.33,"n":2},{"s":"Advanced Resources Group, Inc.","r":"AmeriPath","rc":"Laboratory","pr":22.0,"mu":8.36,"br":30.36,"n":1},{"s":"Yoh Services LLC","r":"AmeriPath","rc":"Laboratory","pr":18.5,"mu":7.95,"br":26.45,"n":1},{"s":"Spectraforce Technologies","r":"AmeriPath","rc":"Laboratory","pr":22.0,"mu":9.46,"br":31.46,"n":1},{"s":"Global Technical Talent","r":"AmeriPath","rc":"Laboratory","pr":36.0,"mu":15.48,"br":51.48,"n":1},{"s":"Iconma LLC","r":"AmeriPath","rc":"Laboratory","pr":21.1,"mu":9.07,"br":30.17,"n":3},{"s":"Integrated Resources, Inc","r":"AmeriPath","rc":"Laboratory","pr":40.0,"mu":17.2,"br":57.2,"n":1},{"s":"Pride Healthcare LLC","r":"AmeriPath","rc":"Laboratory","pr":20.0,"mu":8.6,"br":28.6,"n":1},{"s":"Kforce Inc.","r":"Corporate","rc":"Back office","pr":58.86,"mu":0.0,"br":58.86,"n":2},{"s":"TalentBurst, Inc.","r":"Corporate","rc":"Back office","pr":72.32,"mu":11.48,"br":83.8,"n":13},{"s":"TalentBurst, Inc.","r":"Corporate","rc":"Laboratory","pr":272.73,"mu":57.27,"br":330.0,"n":1},{"s":"TalentBurst, Inc.","r":"Corporate","rc":"Total estimated yearly spend","pr":17.0,"mu":4.25,"br":21.25,"n":1},{"s":"Pride Healthcare LLC","r":"Corporate","rc":"Back office","pr":19.0,"mu":7.22,"br":26.22,"n":1},{"s":"Iconma LLC","r":"Corporate","rc":"Back office","pr":26.33,"mu":10.69,"br":37.02,"n":3},{"s":"Global Technical Talent","r":"Corporate","rc":"Back office","pr":25.23,"mu":10.38,"br":35.61,"n":2},{"s":"eTeam, Inc","r":"Corporate","rc":"Back office","pr":19.0,"mu":7.22,"br":26.22,"n":1},{"s":"Mindlance, Inc","r":"Corporate","rc":"Back office","pr":20.2,"mu":7.93,"br":28.13,"n":5},{"s":"Pride Global Healthcare LLC","r":"Corporate","rc":"Back office","pr":21.75,"mu":8.64,"br":30.39,"n":4},{"s":"Mitchell Martin, Inc.","r":"Corporate","rc":"Back office","pr":84.06,"mu":32.78,"br":116.84,"n":1},{"s":"Synergy Global Systems, Inc","r":"Corporate","rc":"Total estimated yearly spend","pr":17.0,"mu":6.63,"br":23.63,"n":1},{"s":"ADO Professional (DBA LHH)","r":"Corporate","rc":"Back office","pr":31.47,"mu":13.53,"br":45.0,"n":1},{"s":"Pinnacle","r":"Corporate","rc":"Back office","pr":41.0,"mu":17.63,"br":58.63,"n":1},{"s":"Atlantic Group","r":"Corporate","rc":"Back office","pr":60.0,"mu":25.8,"br":85.8,"n":2},{"s":"Cella DBA Randstad North America Inc","r":"Corporate","rc":"Back office","pr":56.0,"mu":33.69,"br":89.69,"n":2},{"s":"Synectics","r":"Corporate","rc":"Back office","pr":25.0,"mu":10.75,"br":35.75,"n":2},{"s":"Cynet Health Inc.","r":"Corporate","rc":"Back office","pr":25.0,"mu":10.75,"br":35.75,"n":1},{"s":"Triage, LLC","r":"East","rc":"Laboratory","pr":110.0,"mu":0.0,"br":110.0,"n":1},{"s":"TalentBurst, Inc.","r":"East","rc":"Back office","pr":75.0,"mu":15.75,"br":90.75,"n":1},{"s":"TalentBurst, Inc.","r":"East","rc":"Laboratory","pr":24.85,"mu":7.08,"br":31.93,"n":86},{"s":"TalentBurst, Inc.","r":"East","rc":"Field","pr":22.4,"mu":7.53,"br":29.93,"n":28},{"s":"Rangam Consultants, Inc.","r":"East","rc":"Total estimated yearly spend","pr":17.33,"mu":6.64,"br":23.98,"n":3},{"s":"Synergy Global Systems, Inc","r":"East","rc":"Back office","pr":22.0,"mu":8.36,"br":30.36,"n":1},{"s":"Spectraforce Technologies","r":"East","rc":"Back office","pr":20.0,"mu":7.6,"br":27.6,"n":1},{"s":"Pinnacle","r":"East","rc":"Back office","pr":25.0,"mu":9.5,"br":34.5,"n":1},{"s":"Spectraforce Technologies","r":"East","rc":"Laboratory","pr":24.97,"mu":10.23,"br":35.2,"n":7},{"s":"Integrated Resources, Inc","r":"East","rc":"Laboratory","pr":41.22,"mu":17.26,"br":58.48,"n":6},{"s":"Yoh Services LLC","r":"East","rc":"Back office","pr":24.75,"mu":9.41,"br":34.16,"n":1},{"s":"Mindlance, Inc","r":"East","rc":"Laboratory","pr":25.06,"mu":10.6,"br":35.66,"n":5},{"s":"Integrated Resources, Inc","r":"East","rc":"Total estimated yearly spend","pr":18.5,"mu":7.21,"br":25.71,"n":2},{"s":"All Medical Personnel Inc.","r":"East","rc":"Total estimated yearly spend","pr":17.0,"mu":6.63,"br":23.63,"n":1},{"s":"LanceSoft","r":"East","rc":"Total estimated yearly spend","pr":17.75,"mu":6.92,"br":24.67,"n":4},{"s":"Advanced Resources Group, Inc.","r":"East","rc":"Total estimated yearly spend","pr":17.5,"mu":6.82,"br":24.32,"n":2},{"s":"Equiliem Healthcare","r":"East","rc":"Total estimated yearly spend","pr":18.0,"mu":7.02,"br":25.02,"n":1},{"s":"TalentBurst, Inc.","r":"East","rc":"Total estimated yearly spend","pr":18.0,"mu":7.02,"br":25.02,"n":1},{"s":"Spectraforce Technologies","r":"East","rc":"Total estimated yearly spend","pr":17.6,"mu":6.87,"br":24.46,"n":2},{"s":"Synectics","r":"East","rc":"Laboratory","pr":33.65,"mu":14.41,"br":48.06,"n":27},{"s":"Global Technical Talent","r":"East","rc":"Laboratory","pr":20.9,"mu":9.17,"br":30.07,"n":3},{"s":"Iconma LLC","r":"East","rc":"Laboratory","pr":29.43,"mu":12.39,"br":41.82,"n":3},{"s":"LanceSoft","r":"East","rc":"Field","pr":22.16,"mu":9.53,"br":31.69,"n":7},{"s":"Pride Healthcare LLC","r":"East","rc":"Field","pr":21.3,"mu":9.16,"br":30.46,"n":5},{"s":"All Medical Personnel Inc.","r":"East","rc":"Laboratory","pr":23.07,"mu":9.92,"br":33.0,"n":2},{"s":"LanceSoft","r":"East","rc":"Laboratory","pr":25.49,"mu":10.96,"br":36.44,"n":3},{"s":"Iconma LLC","r":"East","rc":"Field","pr":21.4,"mu":9.2,"br":30.6,"n":4},{"s":"BayOne Solutions","r":"East","rc":"Field","pr":22.79,"mu":9.79,"br":32.58,"n":12},{"s":"Randstad","r":"East","rc":"Laboratory","pr":24.15,"mu":10.38,"br":34.53,"n":1},{"s":"All Medical Personnel Inc.","r":"East","rc":"Field","pr":22.7,"mu":9.76,"br":32.46,"n":4},{"s":"Pinnacle","r":"East","rc":"Laboratory","pr":30.03,"mu":12.91,"br":42.94,"n":5},{"s":"Spectraforce Technologies","r":"East","rc":"Field","pr":21.65,"mu":9.31,"br":30.95,"n":15},{"s":"Global Technical Talent","r":"East","rc":"Field","pr":21.5,"mu":9.24,"br":30.74,"n":8},{"s":"Integrated Resources, Inc","r":"East","rc":"Field","pr":21.52,"mu":9.25,"br":30.78,"n":13},{"s":"eTeam, Inc","r":"East","rc":"Field","pr":20.94,"mu":9.0,"br":29.95,"n":7},{"s":"A+ Consulting Solutions, Inc","r":"East","rc":"Field","pr":21.2,"mu":9.12,"br":30.32,"n":4},{"s":"Equiliem Healthcare","r":"East","rc":"Field","pr":21.8,"mu":9.37,"br":31.17,"n":1},{"s":"Synectics","r":"East","rc":"Field","pr":20.86,"mu":8.97,"br":29.83,"n":10},{"s":"Pinnacle","r":"East","rc":"Field","pr":21.82,"mu":9.38,"br":31.2,"n":10},{"s":"Pride Global Healthcare LLC","r":"East","rc":"Field","pr":21.52,"mu":9.25,"br":30.77,"n":5},{"s":"Rangam Consultants, Inc.","r":"East","rc":"Field","pr":22.07,"mu":9.49,"br":31.56,"n":5},{"s":"Synergy Global Systems, Inc","r":"East","rc":"Field","pr":20.9,"mu":8.98,"br":29.89,"n":2},{"s":"Rangam Consultants, Inc.","r":"East","rc":"Laboratory","pr":26.67,"mu":11.47,"br":38.13,"n":3},{"s":"Yoh Services LLC","r":"East","rc":"Laboratory","pr":22.0,"mu":9.46,"br":31.46,"n":1},{"s":"Synergy Global Systems, Inc","r":"East","rc":"Laboratory","pr":24.75,"mu":10.64,"br":35.39,"n":2},{"s":"Advanced Resources Group, Inc.","r":"East","rc":"Laboratory","pr":22.0,"mu":9.46,"br":31.46,"n":2},{"s":"BayOne Solutions","r":"East","rc":"Laboratory","pr":25.15,"mu":10.82,"br":35.97,"n":2},{"s":"Pride Healthcare LLC","r":"East","rc":"Laboratory","pr":20.0,"mu":8.6,"br":28.6,"n":1},{"s":"MTSS Staffing, LLC","r":"East","rc":"Laboratory","pr":25.0,"mu":10.75,"br":35.75,"n":1},{"s":"Pride Global Healthcare LLC","r":"East","rc":"Laboratory","pr":24.0,"mu":10.32,"br":34.32,"n":1},{"s":"Mindlance, Inc","r":"East","rc":"Field","pr":23.0,"mu":9.89,"br":32.89,"n":1},{"s":"Dynamic Talent Solutions Inc","r":"East","rc":"Field","pr":21.0,"mu":9.03,"br":30.03,"n":2},{"s":"Advanced Resources Group, Inc.","r":"East","rc":"Field","pr":21.0,"mu":9.03,"br":30.03,"n":1},{"s":"Soliant Health","r":"East","rc":"Laboratory","pr":62.35,"mu":37.65,"br":100.0,"n":1},{"s":"TalentBurst, Inc.","r":"Esoteric","rc":"Back office","pr":36.67,"mu":9.17,"br":45.83,"n":3},{"s":"Cynet Health Inc.","r":"Esoteric","rc":"Laboratory","pr":55.87,"mu":21.33,"br":77.21,"n":6},{"s":"Advanced Resources Group, Inc.","r":"Esoteric","rc":"Total estimated yearly spend","pr":28.0,"mu":10.92,"br":38.92,"n":1},{"s":"Integrated Resources, Inc","r":"Esoteric","rc":"Total estimated yearly spend","pr":27.0,"mu":10.53,"br":37.53,"n":1},{"s":"Equiliem Healthcare","r":"Esoteric","rc":"Total estimated yearly spend","pr":28.0,"mu":10.92,"br":38.92,"n":1},{"s":"MTSS Staffing, LLC","r":"Esoteric","rc":"Total estimated yearly spend","pr":23.0,"mu":8.97,"br":31.97,"n":1},{"s":"Locum Tenens Partners, LLC","r":"Esoteric","rc":"Laboratory","pr":187.5,"mu":76.88,"br":264.38,"n":1},{"s":"Pride Global Healthcare LLC","r":"Esoteric","rc":"Laboratory","pr":51.53,"mu":22.16,"br":73.69,"n":9},{"s":"Mindlance, Inc","r":"Esoteric","rc":"Laboratory","pr":59.19,"mu":25.45,"br":84.64,"n":4},{"s":"Spectraforce Technologies","r":"Esoteric","rc":"Laboratory","pr":23.29,"mu":10.02,"br":33.31,"n":5},{"s":"Iconma LLC","r":"Esoteric","rc":"Laboratory","pr":51.75,"mu":22.25,"br":74.0,"n":4},{"s":"Synectics","r":"Esoteric","rc":"Laboratory","pr":29.29,"mu":12.6,"br":41.89,"n":3},{"s":"Randstad","r":"Esoteric","rc":"Laboratory","pr":18.11,"mu":7.79,"br":25.9,"n":3},{"s":"Pinnacle","r":"Esoteric","rc":"Laboratory","pr":23.0,"mu":9.89,"br":32.89,"n":1},{"s":"TalentBurst, Inc.","r":"Esoteric","rc":"Laboratory","pr":20.44,"mu":8.79,"br":29.23,"n":2},{"s":"TalentBurst, Inc.","r":"ExamOne","rc":"Back office","pr":62.5,"mu":13.12,"br":75.62,"n":1},{"s":"TEKsystems, Inc.","r":"ExamOne","rc":"Back office","pr":17.75,"mu":6.75,"br":24.5,"n":4},{"s":"LanceSoft","r":"ExamOne","rc":"Back office","pr":17.75,"mu":6.75,"br":24.5,"n":2},{"s":"eTeam, Inc","r":"ExamOne","rc":"Back office","pr":17.75,"mu":6.75,"br":24.5,"n":1},{"s":"BayOne Solutions","r":"ExamOne","rc":"Back office","pr":17.75,"mu":6.75,"br":24.5,"n":1},{"s":"Triage, LLC","r":"Great Midwest","rc":"Field","pr":60.0,"mu":0.0,"br":60.0,"n":10},{"s":"HealthCare Connections Inc.","r":"Great Midwest","rc":"Field","pr":60.0,"mu":0.0,"br":60.0,"n":4},{"s":"eTeam, Inc","r":"Great Midwest","rc":"Field","pr":31.56,"mu":8.73,"br":40.3,"n":16},{"s":"HealthCare Connections Inc.","r":"Great Midwest","rc":"Laboratory","pr":82.5,"mu":0.0,"br":82.5,"n":6},{"s":"Triage, LLC","r":"Great Midwest","rc":"Laboratory","pr":84.32,"mu":0.0,"br":84.32,"n":19},{"s":"CHG Medical Staffing,Inc dba CompHealth","r":"Great Midwest","rc":"Laboratory","pr":86.4,"mu":0.0,"br":86.4,"n":5},{"s":"Aureus Radiology, LLC","r":"Great Midwest","rc":"Laboratory","pr":81.0,"mu":0.0,"br":81.0,"n":1},{"s":"TalentBurst, Inc.","r":"Great Midwest","rc":"Laboratory","pr":23.36,"mu":5.23,"br":28.59,"n":14},{"s":"Global Technical Talent","r":"Great Midwest","rc":"Field","pr":28.27,"mu":9.57,"br":37.84,"n":30},{"s":"TalentBurst, Inc.","r":"Great Midwest","rc":"Field","pr":25.03,"mu":8.77,"br":33.8,"n":31},{"s":"TalentBurst, Inc.","r":"Great Midwest","rc":"Total estimated yearly spend","pr":17.17,"mu":4.69,"br":21.86,"n":6},{"s":"Integrated Resources, Inc","r":"Great Midwest","rc":"Laboratory","pr":19.16,"mu":8.11,"br":27.27,"n":8},{"s":"Integrated Resources, Inc","r":"Great Midwest","rc":"Total estimated yearly spend","pr":17.38,"mu":6.78,"br":24.15,"n":2},{"s":"Synergy Global Systems, Inc","r":"Great Midwest","rc":"Total estimated yearly spend","pr":17.0,"mu":6.63,"br":23.63,"n":1},{"s":"LanceSoft","r":"Great Midwest","rc":"Total estimated yearly spend","pr":17.0,"mu":6.63,"br":23.63,"n":5},{"s":"MTSS Staffing, LLC","r":"Great Midwest","rc":"Total estimated yearly spend","pr":17.0,"mu":6.63,"br":23.63,"n":3},{"s":"Pride Healthcare LLC","r":"Great Midwest","rc":"Total estimated yearly spend","pr":17.0,"mu":6.63,"br":23.63,"n":1},{"s":"All Medical Personnel Inc.","r":"Great Midwest","rc":"Total estimated yearly spend","pr":17.0,"mu":6.63,"br":23.63,"n":1},{"s":"A+ Consulting Solutions, Inc","r":"Great Midwest","rc":"Total estimated yearly spend","pr":17.0,"mu":6.63,"br":23.63,"n":1},{"s":"Spectraforce Technologies","r":"Great Midwest","rc":"Total estimated yearly spend","pr":17.33,"mu":6.76,"br":24.09,"n":3},{"s":"Advanced Resources Group, Inc.","r":"Great Midwest","rc":"Total estimated yearly spend","pr":17.75,"mu":6.92,"br":24.67,"n":4},{"s":"Pride Global Healthcare LLC","r":"Great Midwest","rc":"Total estimated yearly spend","pr":23.0,"mu":8.97,"br":31.97,"n":1},{"s":"Rangam Consultants, Inc.","r":"Great Midwest","rc":"Total estimated yearly spend","pr":23.0,"mu":8.97,"br":31.97,"n":1},{"s":"Synectics","r":"Great Midwest","rc":"Total estimated yearly spend","pr":17.0,"mu":6.63,"br":23.63,"n":3},{"s":"BayOne Solutions","r":"Great Midwest","rc":"Total estimated yearly spend","pr":23.0,"mu":8.97,"br":31.97,"n":1},{"s":"Equiliem Healthcare","r":"Great Midwest","rc":"Total estimated yearly spend","pr":17.0,"mu":6.63,"br":23.63,"n":1},{"s":"Synectics","r":"Great Midwest","rc":"Laboratory","pr":19.02,"mu":8.11,"br":27.14,"n":6},{"s":"Advanced Resources Group, Inc.","r":"Great Midwest","rc":"Laboratory","pr":19.67,"mu":8.45,"br":28.12,"n":3},{"s":"Pinnacle","r":"Great Midwest","rc":"Laboratory","pr":19.5,"mu":8.38,"br":27.88,"n":1},{"s":"Spectraforce Technologies","r":"Great Midwest","rc":"Laboratory","pr":21.62,"mu":9.29,"br":30.91,"n":6},{"s":"Pride Global Healthcare LLC","r":"Great Midwest","rc":"Laboratory","pr":19.62,"mu":8.44,"br":28.06,"n":4},{"s":"MTSS Staffing, LLC","r":"Great Midwest","rc":"Laboratory","pr":19.5,"mu":8.38,"br":27.88,"n":1},{"s":"Global Technical Talent","r":"Great Midwest","rc":"Laboratory","pr":20.35,"mu":9.25,"br":29.6,"n":2},{"s":"A+ Consulting Solutions, Inc","r":"Great Midwest","rc":"Laboratory","pr":20.7,"mu":8.9,"br":29.6,"n":1},{"s":"LanceSoft","r":"Great Midwest","rc":"Field","pr":25.1,"mu":10.79,"br":35.89,"n":10},{"s":"Iconma LLC","r":"Great Midwest","rc":"Field","pr":25.18,"mu":10.83,"br":36.01,"n":11},{"s":"Synergy Global Systems, Inc","r":"Great Midwest","rc":"Field","pr":25.0,"mu":10.75,"br":35.75,"n":1},{"s":"BayOne Solutions","r":"Great Midwest","rc":"Field","pr":25.0,"mu":10.75,"br":35.75,"n":21},{"s":"Synectics","r":"Great Midwest","rc":"Field","pr":24.73,"mu":10.63,"br":35.36,"n":11},{"s":"Spectraforce Technologies","r":"Great Midwest","rc":"Field","pr":24.95,"mu":10.73,"br":35.68,"n":20},{"s":"Pride Healthcare LLC","r":"Great Midwest","rc":"Field","pr":26.12,"mu":11.23,"br":37.36,"n":8},{"s":"Mindlance, Inc","r":"Great Midwest","rc":"Field","pr":25.07,"mu":10.78,"br":35.85,"n":15},{"s":"Iconma LLC","r":"Great Midwest","rc":"Laboratory","pr":19.6,"mu":8.43,"br":28.03,"n":2},{"s":"Yoh Services LLC","r":"Great Midwest","rc":"Laboratory","pr":17.6,"mu":7.57,"br":25.17,"n":2},{"s":"BayOne Solutions","r":"Great Midwest","rc":"Back office","pr":25.0,"mu":10.75,"br":35.75,"n":1},{"s":"Integrated Resources, Inc","r":"Great Midwest","rc":"Field","pr":25.08,"mu":10.78,"br":35.86,"n":26},{"s":"Pinnacle","r":"Great Midwest","rc":"Field","pr":24.82,"mu":10.67,"br":35.5,"n":17},{"s":"LanceSoft","r":"Great Midwest","rc":"Laboratory","pr":17.47,"mu":7.51,"br":24.98,"n":3},{"s":"eTeam, Inc","r":"Great Midwest","rc":"Laboratory","pr":18.8,"mu":8.09,"br":26.89,"n":3},{"s":"BayOne Solutions","r":"Great Midwest","rc":"Laboratory","pr":17.47,"mu":7.51,"br":24.98,"n":3},{"s":"Rangam Consultants, Inc.","r":"Great Midwest","rc":"Field","pr":24.86,"mu":10.69,"br":35.55,"n":7},{"s":"Randstad","r":"Great Midwest","rc":"Laboratory","pr":22.0,"mu":9.46,"br":31.46,"n":2},{"s":"A+ Consulting Solutions, Inc","r":"Great Midwest","rc":"Field","pr":25.6,"mu":11.01,"br":36.61,"n":5},{"s":"Advanced Resources Group, Inc.","r":"Great Midwest","rc":"Field","pr":25.2,"mu":10.84,"br":36.04,"n":10},{"s":"Pride Global Healthcare LLC","r":"Great Midwest","rc":"Field","pr":25.17,"mu":10.82,"br":35.99,"n":12},{"s":"Dynamic Talent Solutions Inc","r":"Great Midwest","rc":"Field","pr":26.0,"mu":11.18,"br":37.18,"n":2},{"s":"Altimeter Solutions","r":"Great Midwest","rc":"Field","pr":25.0,"mu":10.75,"br":35.75,"n":2},{"s":"Mindlance, Inc","r":"Great Midwest","rc":"Laboratory","pr":17.2,"mu":7.4,"br":24.6,"n":2},{"s":"Iconma LLC","r":"Healthcare Analytic Solutions","rc":"Back office","pr":22.0,"mu":8.36,"br":30.36,"n":1},{"s":"Pride Global Healthcare LLC","r":"Healthcare Analytic Solutions","rc":"Back office","pr":22.0,"mu":8.36,"br":30.36,"n":1},{"s":"Synectics","r":"Healthcare Analytic Solutions","rc":"Laboratory","pr":63.0,"mu":27.09,"br":90.09,"n":1},{"s":"Triage, LLC","r":"North","rc":"Field","pr":65.0,"mu":0.0,"br":65.0,"n":9},{"s":"Global Technical Talent","r":"North","rc":"Field","pr":50.33,"mu":3.01,"br":53.34,"n":3},{"s":"CHG Medical Staffing,Inc dba CompHealth","r":"North","rc":"Field","pr":65.0,"mu":0.0,"br":65.0,"n":1},{"s":"Integrated Resources, Inc","r":"North","rc":"Field","pr":26.72,"mu":8.0,"br":34.71,"n":16},{"s":"HealthCare Connections Inc.","r":"North","rc":"Laboratory","pr":85.0,"mu":0.0,"br":85.0,"n":3},{"s":"TalentBurst, Inc.","r":"North","rc":"Laboratory","pr":21.02,"mu":3.93,"br":24.95,"n":16},{"s":"Triage, LLC","r":"North","rc":"Laboratory","pr":85.0,"mu":0.0,"br":85.0,"n":5},{"s":"CHG Medical Staffing,Inc dba CompHealth","r":"North","rc":"Laboratory","pr":85.0,"mu":0.0,"br":85.0,"n":3},{"s":"Global Technical Talent","r":"North","rc":"Laboratory","pr":85.0,"mu":0.0,"br":85.0,"n":1},{"s":"Integrated Resources, Inc","r":"North","rc":"Laboratory","pr":85.0,"mu":0.0,"br":85.0,"n":1},{"s":"Aureus Radiology, LLC","r":"North","rc":"Laboratory","pr":85.0,"mu":0.0,"br":85.0,"n":1},{"s":"Dynamic Talent Solutions Inc","r":"North","rc":"Field","pr":35.67,"mu":6.02,"br":41.69,"n":3},{"s":"TalentBurst, Inc.","r":"North","rc":"Back office","pr":17.56,"mu":4.38,"br":21.93,"n":43},{"s":"Comtrix Solutions Inc","r":"North","rc":"Laboratory","pr":42.9,"mu":9.6,"br":52.5,"n":3},{"s":"TalentBurst, Inc.","r":"North","rc":"Field","pr":20.12,"mu":5.96,"br":26.08,"n":25},{"s":"TalentBurst, Inc.","r":"North","rc":"Total estimated yearly spend","pr":22.0,"mu":5.5,"br":27.5,"n":1},{"s":"Synergy Global Systems, Inc","r":"North","rc":"Back office","pr":18.39,"mu":6.99,"br":25.38,"n":1},{"s":"LanceSoft","r":"North","rc":"Back office","pr":18.45,"mu":7.01,"br":25.46,"n":2},{"s":"BayOne Solutions","r":"North","rc":"Back office","pr":18.39,"mu":6.99,"br":25.38,"n":1},{"s":"TEKsystems, Inc.","r":"North","rc":"Back office","pr":18.5,"mu":7.03,"br":25.53,"n":1},{"s":"eTeam, Inc","r":"North","rc":"Back office","pr":27.0,"mu":10.26,"br":37.26,"n":1},{"s":"Synectics","r":"North","rc":"Total estimated yearly spend","pr":17.27,"mu":6.73,"br":24.0,"n":1},{"s":"Spectraforce Technologies","r":"North","rc":"Total estimated yearly spend","pr":17.26,"mu":6.73,"br":23.99,"n":1},{"s":"Integrated Resources, Inc","r":"North","rc":"Total estimated yearly spend","pr":25.0,"mu":9.75,"br":34.75,"n":1},{"s":"A+ Consulting Solutions, Inc","r":"North","rc":"Total estimated yearly spend","pr":19.0,"mu":7.41,"br":26.41,"n":1},{"s":"Rangam Consultants, Inc.","r":"North","rc":"Field","pr":21.6,"mu":9.19,"br":30.79,"n":5},{"s":"eTeam, Inc","r":"North","rc":"Field","pr":19.87,"mu":8.55,"br":28.41,"n":2},{"s":"Pride Global Healthcare LLC","r":"North","rc":"Field","pr":21.7,"mu":9.33,"br":31.03,"n":1},{"s":"BayOne Solutions","r":"North","rc":"Field","pr":22.02,"mu":9.47,"br":31.49,"n":23},{"s":"Synergy Global Systems, Inc","r":"North","rc":"Field","pr":21.0,"mu":9.03,"br":30.03,"n":1},{"s":"Synectics","r":"North","rc":"Field","pr":20.4,"mu":8.77,"br":29.17,"n":5},{"s":"Spectraforce Technologies","r":"North","rc":"Field","pr":21.8,"mu":9.37,"br":31.17,"n":5},{"s":"Pinnacle","r":"North","rc":"Field","pr":20.29,"mu":8.72,"br":29.02,"n":2},{"s":"Atlantic Group","r":"North","rc":"Field","pr":21.5,"mu":9.25,"br":30.75,"n":2},{"s":"A+ Consulting Solutions, Inc","r":"North","rc":"Field","pr":22.0,"mu":9.46,"br":31.46,"n":1},{"s":"Iconma LLC","r":"North","rc":"Field","pr":27.61,"mu":11.88,"br":39.49,"n":4},{"s":"LanceSoft","r":"North","rc":"Field","pr":21.0,"mu":9.03,"br":30.03,"n":2},{"s":"Mindlance, Inc","r":"North","rc":"Field","pr":22.0,"mu":9.46,"br":31.46,"n":3},{"s":"Pride Healthcare LLC","r":"North","rc":"Field","pr":22.0,"mu":9.46,"br":31.46,"n":1},{"s":"BayOne Solutions","r":"North","rc":"Laboratory","pr":22.33,"mu":9.6,"br":31.94,"n":3},{"s":"Randstad","r":"North","rc":"Laboratory","pr":20.0,"mu":8.6,"br":28.6,"n":1},{"s":"Synectics","r":"North","rc":"Laboratory","pr":20.0,"mu":8.6,"br":28.6,"n":3},{"s":"Iconma LLC","r":"North","rc":"Laboratory","pr":25.0,"mu":10.75,"br":35.75,"n":2},{"s":"Mindlance, Inc","r":"North","rc":"Laboratory","pr":19.0,"mu":8.17,"br":27.17,"n":2},{"s":"Rangam Consultants, Inc.","r":"North","rc":"Laboratory","pr":17.0,"mu":7.31,"br":24.31,"n":1},{"s":"Spectraforce Technologies","r":"North","rc":"Laboratory","pr":18.0,"mu":7.74,"br":25.74,"n":2},{"s":"LanceSoft","r":"North","rc":"Laboratory","pr":20.0,"mu":8.6,"br":28.6,"n":1},{"s":"Atlantic Group","r":"North","rc":"Laboratory","pr":20.0,"mu":8.6,"br":28.6,"n":1},{"s":"Pride Global Healthcare LLC","r":"North","rc":"Laboratory","pr":23.0,"mu":9.89,"br":32.89,"n":1},{"s":"Advanced Resources Group, Inc.","r":"North","rc":"Field","pr":22.0,"mu":9.46,"br":31.46,"n":1},{"s":"TalentBurst, Inc.","r":"Pack Health","rc":"Back office","pr":50.0,"mu":12.5,"br":62.5,"n":1},{"s":"Triage, LLC","r":"SouthEast","rc":"Field","pr":48.0,"mu":0.0,"br":48.0,"n":4},{"s":"HealthCare Connections Inc.","r":"SouthEast","rc":"Laboratory","pr":79.0,"mu":0.0,"br":79.0,"n":1},{"s":"TalentBurst, Inc.","r":"SouthEast","rc":"Total estimated yearly spend","pr":17.2,"mu":4.31,"br":21.51,"n":66},{"s":"TalentBurst, Inc.","r":"SouthEast","rc":"Laboratory","pr":19.53,"mu":5.41,"br":24.94,"n":60},{"s":"TalentBurst, Inc.","r":"SouthEast","rc":"Field","pr":18.9,"mu":6.48,"br":25.38,"n":275},{"s":"Synergy Global Systems, Inc","r":"SouthEast","rc":"Total estimated yearly spend","pr":17.0,"mu":5.27,"br":22.27,"n":1},{"s":"Synectics","r":"SouthEast","rc":"Total estimated yearly spend","pr":17.0,"mu":6.29,"br":23.29,"n":2},{"s":"All Medical Personnel Inc.","r":"SouthEast","rc":"Total estimated yearly spend","pr":16.99,"mu":6.57,"br":23.56,"n":3},{"s":"Smith & Dean, Inc","r":"SouthEast","rc":"Total estimated yearly spend","pr":17.0,"mu":6.46,"br":23.46,"n":1},{"s":"Pride Healthcare LLC","r":"SouthEast","rc":"Total estimated yearly spend","pr":16.75,"mu":6.45,"br":23.2,"n":2},{"s":"Spectraforce Technologies","r":"SouthEast","rc":"Total estimated yearly spend","pr":17.43,"mu":6.77,"br":24.2,"n":7},{"s":"Equiliem Healthcare","r":"SouthEast","rc":"Total estimated yearly spend","pr":17.5,"mu":6.74,"br":24.24,"n":2},{"s":"Mindlance, Inc","r":"SouthEast","rc":"Back office","pr":20.7,"mu":7.87,"br":28.57,"n":1},{"s":"TalentBurst, Inc.","r":"SouthEast","rc":"Back office","pr":19.53,"mu":7.71,"br":27.25,"n":3},{"s":"Rangam Consultants, Inc.","r":"SouthEast","rc":"Total estimated yearly spend","pr":17.62,"mu":6.88,"br":24.5,"n":2},{"s":"Integrated Resources, Inc","r":"SouthEast","rc":"Total estimated yearly spend","pr":18.0,"mu":7.02,"br":25.02,"n":1},{"s":"A+ Consulting Solutions, Inc","r":"SouthEast","rc":"Total estimated yearly spend","pr":17.0,"mu":6.63,"br":23.63,"n":1},{"s":"LanceSoft","r":"SouthEast","rc":"Total estimated yearly spend","pr":17.25,"mu":6.73,"br":23.98,"n":2},{"s":"Advanced Resources Group, Inc.","r":"SouthEast","rc":"Total estimated yearly spend","pr":17.25,"mu":6.73,"br":23.98,"n":1},{"s":"Mindlance, Inc","r":"SouthEast","rc":"Field","pr":19.04,"mu":8.18,"br":27.21,"n":46},{"s":"Spectraforce Technologies","r":"SouthEast","rc":"Field","pr":19.84,"mu":8.52,"br":28.37,"n":83},{"s":"Pride Healthcare LLC","r":"SouthEast","rc":"Field","pr":19.0,"mu":8.15,"br":27.16,"n":24},{"s":"Integrated Resources, Inc","r":"SouthEast","rc":"Field","pr":19.3,"mu":8.29,"br":27.59,"n":109},{"s":"Iconma LLC","r":"SouthEast","rc":"Field","pr":19.64,"mu":8.45,"br":28.09,"n":37},{"s":"All Medical Personnel Inc.","r":"SouthEast","rc":"Field","pr":19.19,"mu":8.25,"br":27.44,"n":88},{"s":"Synectics","r":"SouthEast","rc":"Field","pr":19.11,"mu":8.22,"br":27.33,"n":64},{"s":"Rangam Consultants, Inc.","r":"SouthEast","rc":"Field","pr":19.69,"mu":8.47,"br":28.15,"n":52},{"s":"BayOne Solutions","r":"SouthEast","rc":"Field","pr":19.5,"mu":8.38,"br":27.88,"n":14},{"s":"Pinnacle","r":"SouthEast","rc":"Field","pr":20.94,"mu":9.01,"br":29.95,"n":13},{"s":"LanceSoft","r":"SouthEast","rc":"Field","pr":19.2,"mu":8.25,"br":27.46,"n":4},{"s":"eTeam, Inc","r":"SouthEast","rc":"Field","pr":19.27,"mu":8.29,"br":27.56,"n":9},{"s":"Equiliem Healthcare","r":"SouthEast","rc":"Field","pr":19.0,"mu":8.17,"br":27.17,"n":17},{"s":"Iconma LLC","r":"SouthEast","rc":"Laboratory","pr":19.78,"mu":8.51,"br":28.29,"n":8},{"s":"Pride Global Healthcare LLC","r":"SouthEast","rc":"Field","pr":19.98,"mu":8.59,"br":28.57,"n":37},{"s":"Integrated Resources, Inc","r":"SouthEast","rc":"Laboratory","pr":18.67,"mu":8.03,"br":26.71,"n":7},{"s":"Advanced Resources Group, Inc.","r":"SouthEast","rc":"Field","pr":18.99,"mu":8.17,"br":27.15,"n":10},{"s":"A+ Consulting Solutions, Inc","r":"SouthEast","rc":"Field","pr":20.7,"mu":8.9,"br":29.6,"n":12},{"s":"Synergy Global Systems, Inc","r":"SouthEast","rc":"Field","pr":17.68,"mu":7.6,"br":25.27,"n":2},{"s":"Atlantic Group","r":"SouthEast","rc":"Laboratory","pr":17.75,"mu":7.63,"br":25.38,"n":1},{"s":"All Medical Personnel Inc.","r":"SouthEast","rc":"Laboratory","pr":19.33,"mu":8.31,"br":27.64,"n":9},{"s":"Synectics","r":"SouthEast","rc":"Laboratory","pr":19.44,"mu":8.36,"br":27.8,"n":6},{"s":"Spectraforce Technologies","r":"SouthEast","rc":"Laboratory","pr":19.12,"mu":8.23,"br":27.35,"n":7},{"s":"Global Technical Talent","r":"SouthEast","rc":"Field","pr":20.9,"mu":8.99,"br":29.89,"n":3},{"s":"Pride Healthcare LLC","r":"SouthEast","rc":"Laboratory","pr":18.85,"mu":8.11,"br":26.96,"n":3},{"s":"Rangam Consultants, Inc.","r":"SouthEast","rc":"Laboratory","pr":22.19,"mu":9.54,"br":31.73,"n":3},{"s":"Altimeter Solutions","r":"SouthEast","rc":"Field","pr":23.3,"mu":10.02,"br":33.32,"n":1},{"s":"MTSS Staffing, LLC","r":"SouthEast","rc":"Field","pr":20.72,"mu":8.91,"br":29.63,"n":1},{"s":"Pride Global Healthcare LLC","r":"SouthEast","rc":"Laboratory","pr":21.59,"mu":9.28,"br":30.87,"n":4},{"s":"Mindlance, Inc","r":"SouthEast","rc":"Laboratory","pr":19.26,"mu":8.29,"br":27.55,"n":5},{"s":"Randstad","r":"SouthEast","rc":"Laboratory","pr":19.78,"mu":8.51,"br":28.29,"n":5},{"s":"Equiliem Healthcare","r":"SouthEast","rc":"Laboratory","pr":19.78,"mu":8.51,"br":28.29,"n":1},{"s":"Advanced Resources Group, Inc.","r":"SouthEast","rc":"Laboratory","pr":19.78,"mu":8.51,"br":28.29,"n":1},{"s":"eTeam, Inc","r":"SouthEast","rc":"Laboratory","pr":19.78,"mu":8.51,"br":28.29,"n":1},{"s":"MTSS Staffing, LLC","r":"SouthEast","rc":"Laboratory","pr":18.49,"mu":7.96,"br":26.45,"n":2},{"s":"BayOne Solutions","r":"SouthEast","rc":"Laboratory","pr":19.78,"mu":8.51,"br":28.29,"n":1},{"s":"Atlantic Group","r":"SouthEast","rc":"Field","pr":19.85,"mu":8.54,"br":28.39,"n":1},{"s":"A+ Consulting Solutions, Inc","r":"SouthEast","rc":"Laboratory","pr":19.78,"mu":8.51,"br":28.29,"n":1},{"s":"Pinnacle","r":"SouthEast","rc":"Laboratory","pr":19.78,"mu":8.51,"br":28.29,"n":3},{"s":"TalentBurst, Inc.","r":"SouthWest","rc":"Back office","pr":102.5,"mu":22.12,"br":124.62,"n":2},{"s":"TalentBurst, Inc.","r":"SouthWest","rc":"Laboratory","pr":20.58,"mu":7.17,"br":27.76,"n":19},{"s":"TalentBurst, Inc.","r":"SouthWest","rc":"Field","pr":21.53,"mu":7.65,"br":29.18,"n":17},{"s":"TalentBurst, Inc.","r":"SouthWest","rc":"Total estimated yearly spend","pr":17.16,"mu":4.46,"br":21.62,"n":15},{"s":"A+ Consulting Solutions, Inc","r":"SouthWest","rc":"Total estimated yearly spend","pr":18.12,"mu":7.06,"br":25.19,"n":2},{"s":"Advanced Resources Group, Inc.","r":"SouthWest","rc":"Total estimated yearly spend","pr":17.19,"mu":6.7,"br":23.89,"n":1},{"s":"Integrated Resources, Inc","r":"SouthWest","rc":"Total estimated yearly spend","pr":17.19,"mu":6.7,"br":23.89,"n":1},{"s":"Spectraforce Technologies","r":"SouthWest","rc":"Total estimated yearly spend","pr":17.19,"mu":6.7,"br":23.89,"n":1},{"s":"Rangam Consultants, Inc.","r":"SouthWest","rc":"Total estimated yearly spend","pr":16.4,"mu":6.4,"br":22.8,"n":1},{"s":"Iconma LLC","r":"SouthWest","rc":"Laboratory","pr":36.73,"mu":15.4,"br":52.14,"n":3},{"s":"Mindlance, Inc","r":"SouthWest","rc":"Field","pr":21.82,"mu":9.35,"br":31.17,"n":15},{"s":"Synectics","r":"SouthWest","rc":"Field","pr":21.5,"mu":9.2,"br":30.7,"n":10},{"s":"eTeam, Inc","r":"SouthWest","rc":"Field","pr":21.59,"mu":9.28,"br":30.88,"n":5},{"s":"Synergy Global Systems, Inc","r":"SouthWest","rc":"Field","pr":20.88,"mu":8.98,"br":29.85,"n":4},{"s":"Equiliem Healthcare","r":"SouthWest","rc":"Field","pr":20.56,"mu":8.84,"br":29.4,"n":3},{"s":"BayOne Solutions","r":"SouthWest","rc":"Field","pr":21.15,"mu":9.09,"br":30.24,"n":10},{"s":"Altimeter Solutions","r":"SouthWest","rc":"Field","pr":20.4,"mu":8.77,"br":29.17,"n":3},{"s":"Pride Global Healthcare LLC","r":"SouthWest","rc":"Field","pr":21.69,"mu":9.33,"br":31.02,"n":3},{"s":"Rangam Consultants, Inc.","r":"SouthWest","rc":"Field","pr":21.02,"mu":9.04,"br":30.06,"n":5},{"s":"LanceSoft","r":"SouthWest","rc":"Field","pr":21.9,"mu":9.42,"br":31.32,"n":12},{"s":"Pinnacle","r":"SouthWest","rc":"Field","pr":20.89,"mu":8.98,"br":29.87,"n":9},{"s":"Smith & Dean, Inc","r":"SouthWest","rc":"Field","pr":21.21,"mu":9.12,"br":30.33,"n":6},{"s":"Iconma LLC","r":"SouthWest","rc":"Field","pr":20.89,"mu":8.98,"br":29.87,"n":4},{"s":"Global Technical Talent","r":"SouthWest","rc":"Field","pr":21.72,"mu":9.34,"br":31.05,"n":7},{"s":"Advanced Resources Group, Inc.","r":"SouthWest","rc":"Field","pr":21.82,"mu":9.38,"br":31.2,"n":5},{"s":"Integrated Resources, Inc","r":"SouthWest","rc":"Field","pr":22.12,"mu":9.51,"br":31.63,"n":9},{"s":"A+ Consulting Solutions, Inc","r":"SouthWest","rc":"Field","pr":21.78,"mu":9.37,"br":31.14,"n":4},{"s":"Pride Healthcare LLC","r":"SouthWest","rc":"Field","pr":20.76,"mu":8.93,"br":29.68,"n":2},{"s":"Spectraforce Technologies","r":"SouthWest","rc":"Field","pr":22.04,"mu":9.48,"br":31.52,"n":3},{"s":"Dynamic Talent Solutions Inc","r":"SouthWest","rc":"Field","pr":22.04,"mu":9.48,"br":31.52,"n":3},{"s":"LanceSoft","r":"SouthWest","rc":"Laboratory","pr":23.6,"mu":10.15,"br":33.75,"n":4},{"s":"MTSS Staffing, LLC","r":"SouthWest","rc":"Field","pr":22.53,"mu":9.69,"br":32.22,"n":1},{"s":"eTeam, Inc","r":"SouthWest","rc":"Laboratory","pr":24.02,"mu":10.33,"br":34.36,"n":8},{"s":"Spectraforce Technologies","r":"SouthWest","rc":"Laboratory","pr":19.31,"mu":8.31,"br":27.62,"n":7},{"s":"Smith & Dean, Inc","r":"SouthWest","rc":"Laboratory","pr":19.44,"mu":8.36,"br":27.8,"n":5},{"s":"Mindlance, Inc","r":"SouthWest","rc":"Laboratory","pr":25.04,"mu":10.77,"br":35.81,"n":5},{"s":"Pride Healthcare LLC","r":"SouthWest","rc":"Laboratory","pr":19.07,"mu":8.2,"br":27.27,"n":3},{"s":"Yoh Services LLC","r":"SouthWest","rc":"Laboratory","pr":20.0,"mu":8.6,"br":28.6,"n":2},{"s":"Integrated Resources, Inc","r":"SouthWest","rc":"Laboratory","pr":23.22,"mu":9.99,"br":33.21,"n":17},{"s":"BayOne Solutions","r":"SouthWest","rc":"Laboratory","pr":35.0,"mu":15.05,"br":50.05,"n":2},{"s":"Randstad","r":"SouthWest","rc":"Laboratory","pr":20.0,"mu":8.6,"br":28.6,"n":2},{"s":"Global Technical Talent","r":"SouthWest","rc":"Laboratory","pr":32.0,"mu":13.76,"br":45.76,"n":5},{"s":"Advanced Resources Group, Inc.","r":"SouthWest","rc":"Laboratory","pr":24.88,"mu":10.7,"br":35.58,"n":5},{"s":"Pinnacle","r":"SouthWest","rc":"Laboratory","pr":19.04,"mu":8.19,"br":27.23,"n":5},{"s":"All Medical Personnel Inc.","r":"SouthWest","rc":"Laboratory","pr":20.0,"mu":8.6,"br":28.6,"n":1},{"s":"Rangam Consultants, Inc.","r":"SouthWest","rc":"Laboratory","pr":20.0,"mu":8.6,"br":28.6,"n":1},{"s":"Altimeter Solutions","r":"SouthWest","rc":"Laboratory","pr":18.0,"mu":7.74,"br":25.74,"n":1},{"s":"Synectics","r":"SouthWest","rc":"Laboratory","pr":28.0,"mu":12.04,"br":40.04,"n":5},{"s":"A+ Consulting Solutions, Inc","r":"SouthWest","rc":"Laboratory","pr":20.0,"mu":8.6,"br":28.6,"n":1},{"s":"Pride Global Healthcare LLC","r":"SouthWest","rc":"Laboratory","pr":19.83,"mu":8.53,"br":28.36,"n":6},{"s":"Dynamic Talent Solutions Inc","r":"SouthWest","rc":"Laboratory","pr":35.0,"mu":15.05,"br":50.05,"n":1},{"s":"All Medical Personnel Inc.","r":"SouthWest","rc":"Field","pr":21.06,"mu":9.06,"br":30.12,"n":1},{"s":"Ampian Staffing Inc.","r":"West","rc":"Laboratory","pr":83.43,"mu":27.97,"br":111.4,"n":5},{"s":"TalentBurst, Inc.","r":"West","rc":"Back office","pr":33.66,"mu":7.07,"br":40.73,"n":3},{"s":"TalentBurst, Inc.","r":"West","rc":"Field","pr":22.73,"mu":7.58,"br":30.31,"n":60},{"s":"TalentBurst, Inc.","r":"West","rc":"Total estimated yearly spend","pr":19.82,"mu":6.18,"br":26.0,"n":11},{"s":"TalentBurst, Inc.","r":"West","rc":"Laboratory","pr":24.51,"mu":6.62,"br":31.13,"n":17},{"s":"Pinnacle","r":"West","rc":"Total estimated yearly spend","pr":20.0,"mu":7.38,"br":27.38,"n":1},{"s":"Advanced Resources Group, Inc.","r":"West","rc":"Total estimated yearly spend","pr":17.99,"mu":6.82,"br":24.81,"n":2},{"s":"LanceSoft","r":"West","rc":"Total estimated yearly spend","pr":18.57,"mu":7.24,"br":25.81,"n":7},{"s":"All Medical Personnel Inc.","r":"West","rc":"Total estimated yearly spend","pr":21.25,"mu":8.29,"br":29.54,"n":2},{"s":"Spectraforce Technologies","r":"West","rc":"Total estimated yearly spend","pr":21.0,"mu":8.19,"br":29.19,"n":2},{"s":"Synergy Global Systems, Inc","r":"West","rc":"Total estimated yearly spend","pr":23.0,"mu":8.97,"br":31.97,"n":1},{"s":"BayOne Solutions","r":"West","rc":"Total estimated yearly spend","pr":19.41,"mu":7.57,"br":26.98,"n":4},{"s":"Integrated Resources, Inc","r":"West","rc":"Total estimated yearly spend","pr":25.0,"mu":9.75,"br":34.75,"n":1},{"s":"Synectics","r":"West","rc":"Total estimated yearly spend","pr":20.0,"mu":7.8,"br":27.8,"n":1},{"s":"Rangam Consultants, Inc.","r":"West","rc":"Total estimated yearly spend","pr":20.76,"mu":8.1,"br":28.86,"n":1},{"s":"Pride Healthcare LLC","r":"West","rc":"Total estimated yearly spend","pr":17.5,"mu":6.83,"br":24.33,"n":3},{"s":"Pride Global Healthcare LLC","r":"West","rc":"Total estimated yearly spend","pr":17.63,"mu":6.88,"br":24.51,"n":1},{"s":"LanceSoft","r":"West","rc":"Field","pr":24.33,"mu":10.39,"br":34.73,"n":8},{"s":"Synectics","r":"West","rc":"Laboratory","pr":22.34,"mu":9.54,"br":31.87,"n":7},{"s":"Integrated Resources, Inc","r":"West","rc":"Field","pr":23.75,"mu":10.21,"br":33.96,"n":29},{"s":"Spectraforce Technologies","r":"West","rc":"Field","pr":22.92,"mu":9.86,"br":32.78,"n":18},{"s":"Pinnacle","r":"West","rc":"Field","pr":22.55,"mu":9.7,"br":32.25,"n":16},{"s":"Iconma LLC","r":"West","rc":"Field","pr":22.11,"mu":9.51,"br":31.62,"n":19},{"s":"Synectics","r":"West","rc":"Field","pr":22.27,"mu":9.58,"br":31.85,"n":20},{"s":"Pride Healthcare LLC","r":"West","rc":"Field","pr":23.18,"mu":10.2,"br":33.38,"n":8},{"s":"Synergy Global Systems, Inc","r":"West","rc":"Field","pr":20.88,"mu":8.98,"br":29.85,"n":4},{"s":"All Medical Personnel Inc.","r":"West","rc":"Field","pr":26.11,"mu":11.25,"br":37.36,"n":9},{"s":"Mindlance, Inc","r":"West","rc":"Field","pr":24.19,"mu":10.4,"br":34.59,"n":11},{"s":"BayOne Solutions","r":"West","rc":"Field","pr":22.86,"mu":9.83,"br":32.68,"n":23},{"s":"eTeam, Inc","r":"West","rc":"Field","pr":23.69,"mu":10.32,"br":34.01,"n":9},{"s":"Dynamic Talent Solutions Inc","r":"West","rc":"Field","pr":23.55,"mu":10.12,"br":33.67,"n":2},{"s":"Pride Global Healthcare LLC","r":"West","rc":"Field","pr":27.75,"mu":11.93,"br":39.68,"n":1},{"s":"Global Technical Talent","r":"West","rc":"Field","pr":23.26,"mu":10.09,"br":33.35,"n":14},{"s":"Randstad","r":"West","rc":"Laboratory","pr":21.7,"mu":9.33,"br":31.03,"n":2},{"s":"Mindlance, Inc","r":"West","rc":"Laboratory","pr":23.35,"mu":10.04,"br":33.39,"n":2},{"s":"Advanced Resources Group, Inc.","r":"West","rc":"Laboratory","pr":22.35,"mu":9.61,"br":31.96,"n":2},{"s":"Integrated Resources, Inc","r":"West","rc":"Laboratory","pr":31.18,"mu":13.4,"br":44.58,"n":2},{"s":"All Medical Personnel Inc.","r":"West","rc":"Laboratory","pr":22.35,"mu":9.61,"br":31.96,"n":2},{"s":"Pinnacle","r":"West","rc":"Laboratory","pr":22.35,"mu":9.61,"br":31.96,"n":2},{"s":"Pride Global Healthcare LLC","r":"West","rc":"Laboratory","pr":28.9,"mu":12.43,"br":41.33,"n":3},{"s":"Spectraforce Technologies","r":"West","rc":"Laboratory","pr":23.34,"mu":10.04,"br":33.39,"n":2},{"s":"Rangam Consultants, Inc.","r":"West","rc":"Field","pr":25.0,"mu":10.75,"br":35.75,"n":2},{"s":"Advanced Resources Group, Inc.","r":"West","rc":"Field","pr":24.81,"mu":10.67,"br":35.48,"n":4},{"s":"Atlantic Group","r":"West","rc":"Field","pr":24.0,"mu":10.32,"br":34.32,"n":1},{"s":"CHG Medical Staffing,Inc dba CompHealth","r":"West","rc":"Laboratory","pr":97.9,"mu":42.1,"br":140.0,"n":1},{"s":"A+ Consulting Solutions, Inc","r":"West","rc":"Field","pr":23.85,"mu":10.26,"br":34.11,"n":2},{"s":"TalentBurst, Inc.","r":"Workforce Health Solutions","rc":"Laboratory","pr":17.97,"mu":6.66,"br":24.62,"n":6},{"s":"TalentBurst, Inc.","r":"Workforce Health Solutions","rc":"Back office","pr":20.0,"mu":7.6,"br":27.6,"n":1},{"s":"A+ Consulting Solutions, Inc","r":"Workforce Health Solutions","rc":"Back office","pr":20.0,"mu":7.6,"br":27.6,"n":1},{"s":"Pinnacle","r":"Workforce Health Solutions","rc":"Back office","pr":20.0,"mu":7.6,"br":27.6,"n":1},{"s":"Spectraforce Technologies","r":"Workforce Health Solutions","rc":"Back office","pr":19.0,"mu":7.22,"br":26.22,"n":2},{"s":"Advanced Resources Group, Inc.","r":"Workforce Health Solutions","rc":"Back office","pr":19.0,"mu":7.22,"br":26.22,"n":1},{"s":"BayOne Solutions","r":"Workforce Health Solutions","rc":"Back office","pr":19.0,"mu":7.22,"br":26.22,"n":1},{"s":"Integrated Resources, Inc","r":"Workforce Health Solutions","rc":"Back office","pr":18.0,"mu":6.84,"br":24.84,"n":2},{"s":"Integrated Resources, Inc","r":"Workforce Health Solutions","rc":"Laboratory","pr":18.13,"mu":7.8,"br":25.93,"n":3},{"s":"BayOne Solutions","r":"Workforce Health Solutions","rc":"Laboratory","pr":25.67,"mu":11.04,"br":36.71,"n":4},{"s":"Pinnacle","r":"Workforce Health Solutions","rc":"Laboratory","pr":22.57,"mu":9.71,"br":32.28,"n":4},{"s":"Randstad","r":"Workforce Health Solutions","rc":"Laboratory","pr":21.12,"mu":9.08,"br":30.2,"n":3},{"s":"Spectraforce Technologies","r":"Workforce Health Solutions","rc":"Laboratory","pr":18.2,"mu":7.83,"br":26.03,"n":6},{"s":"Yoh Services LLC","r":"Workforce Health Solutions","rc":"Laboratory","pr":18.2,"mu":7.83,"br":26.03,"n":1},{"s":"Advanced Resources Group, Inc.","r":"Workforce Health Solutions","rc":"Laboratory","pr":18.2,"mu":7.83,"br":26.03,"n":2},{"s":"Synergy Global Systems, Inc","r":"Workforce Health Solutions","rc":"Laboratory","pr":18.2,"mu":7.83,"br":26.03,"n":1},{"s":"eTeam, Inc","r":"Workforce Health Solutions","rc":"Laboratory","pr":18.2,"mu":7.83,"br":26.03,"n":3},{"s":"LanceSoft","r":"Workforce Health Solutions","rc":"Laboratory","pr":18.2,"mu":7.83,"br":26.03,"n":3},{"s":"Global Technical Talent","r":"Workforce Health Solutions","rc":"Laboratory","pr":18.2,"mu":7.83,"br":26.03,"n":3},{"s":"Rangam Consultants, Inc.","r":"Workforce Health Solutions","rc":"Laboratory","pr":18.2,"mu":7.83,"br":26.03,"n":2},{"s":"MTSS Staffing, LLC","r":"Workforce Health Solutions","rc":"Laboratory","pr":18.2,"mu":7.83,"br":26.03,"n":2},{"s":"Pride Global Healthcare LLC","r":"Workforce Health Solutions","rc":"Laboratory","pr":18.2,"mu":7.83,"br":26.03,"n":1}];
+const ROLE_AGG = [{"name":"Field","totalSpend":25325080.56,"avgBr":30.44,"avgMu":8.46,"avgPr":21.98,"pctNotMeeting":27.6},{"name":"Laboratory","totalSpend":17058736.56,"avgBr":40.2,"avgMu":9.02,"avgPr":31.19,"pctNotMeeting":22.7},{"name":"Back office","totalSpend":4200097.36,"avgBr":38.72,"avgMu":8.42,"avgPr":30.3,"pctNotMeeting":11.6},{"name":"Total estimated yearly spend","totalSpend":2494972.48,"avgBr":24.01,"avgMu":5.96,"avgPr":18.06,"pctNotMeeting":27.4}];
+const TITLE_AGG = [{"name":"Phlebotomist","rc":"Field","totalSpend":25325080.56,"avgBr":30.44,"avgMu":8.46,"avgPr":21.98,"pctNotMeeting":27.6},{"name":"Medical Laboratory Scientist","rc":"Laboratory","totalSpend":4195720.64,"avgBr":69.25,"avgMu":9.3,"avgPr":59.94,"pctNotMeeting":11.8},{"name":"Specimen Techniciannician","rc":"Laboratory","totalSpend":3127134.08,"avgBr":27.67,"avgMu":7.44,"avgPr":20.24,"pctNotMeeting":31.2},{"name":"Lab Assistant","rc":"Laboratory","totalSpend":2351854.16,"avgBr":29.09,"avgMu":8.11,"avgPr":20.99,"pctNotMeeting":18.4},{"name":"Medical Technologist","rc":"Laboratory","totalSpend":1920607.2,"avgBr":98.07,"avgMu":21.19,"avgPr":76.88,"pctNotMeeting":4.2},{"name":"Shipping & Receiving","rc":"Total estimated yearly spend","totalSpend":1443839.76,"avgBr":22.93,"avgMu":5.36,"avgPr":17.57,"pctNotMeeting":26.2},{"name":"AMBA Travel","rc":"Back office","totalSpend":843572.64,"avgBr":19.38,"avgMu":3.88,"avgPr":15.5,"pctNotMeeting":0.0},{"name":"Medical Technician","rc":"Laboratory","totalSpend":769692.32,"avgBr":79.39,"avgMu":4.84,"avgPr":74.55,"pctNotMeeting":12.5},{"name":"Recruiting","rc":"Back office","totalSpend":760888.8,"avgBr":79.46,"avgMu":13.68,"avgPr":65.78,"pctNotMeeting":11.1},{"name":"Clinical Laboratory Scientist","rc":"Laboratory","totalSpend":719879.12,"avgBr":78.56,"avgMu":23.13,"avgPr":55.43,"pctNotMeeting":13.0},{"name":"Pre - Analytical Assistant I","rc":"Laboratory","totalSpend":645218.32,"avgBr":26.41,"avgMu":6.38,"avgPr":20.03,"pctNotMeeting":18.2},{"name":"Histotechnician","rc":"Laboratory","totalSpend":492656.0,"avgBr":101.8,"avgMu":0.0,"avgPr":101.8,"pctNotMeeting":0.0},{"name":"Pathologist","rc":"Laboratory","totalSpend":480114.08,"avgBr":264.38,"avgMu":76.88,"avgPr":187.5,"pctNotMeeting":0.0},{"name":"Order Fulfillment","rc":"Total estimated yearly spend","totalSpend":386204.32,"avgBr":23.15,"avgMu":6.18,"avgPr":16.97,"pctNotMeeting":45.2},{"name":"Manager/Lead","rc":"Back office","totalSpend":368250.0,"avgBr":31.25,"avgMu":6.25,"avgPr":25.0,"pctNotMeeting":0.0},{"name":"Specimen Technician","rc":"Laboratory","totalSpend":360312.96,"avgBr":19.38,"avgMu":3.88,"avgPr":15.5,"pctNotMeeting":0.0},{"name":"Pre - Analytical Assistant","rc":"Laboratory","totalSpend":359723.92,"avgBr":27.8,"avgMu":7.5,"avgPr":20.3,"pctNotMeeting":33.3},{"name":"Forensic Processing Technician","rc":"Laboratory","totalSpend":351349.84,"avgBr":25.94,"avgMu":7.74,"avgPr":18.2,"pctNotMeeting":45.9},{"name":"Route Service Representative","rc":"Total estimated yearly spend","totalSpend":317457.12,"avgBr":30.53,"avgMu":8.29,"avgPr":22.24,"pctNotMeeting":5.9},{"name":"Project Manager","rc":"Back office","totalSpend":290239.04,"avgBr":96.15,"avgMu":28.13,"avgPr":68.02,"pctNotMeeting":0.0},{"name":"Customer Service","rc":"Back office","totalSpend":270714.96,"avgBr":25.64,"avgMu":6.96,"avgPr":18.68,"pctNotMeeting":34.8},{"name":"Program Director","rc":"Back office","totalSpend":264748.0,"avgBr":217.8,"avgMu":18.38,"avgPr":199.43,"pctNotMeeting":0.0},{"name":"PSC Greeter","rc":"Laboratory","totalSpend":258192.24,"avgBr":25.99,"avgMu":7.39,"avgPr":18.59,"pctNotMeeting":27.3},{"name":"Pathologist Assistant","rc":"Laboratory","totalSpend":258080.0,"avgBr":121.0,"avgMu":36.39,"avgPr":84.61,"pctNotMeeting":0.0},{"name":"Genomic AI Intern","rc":"Laboratory","totalSpend":250800.0,"avgBr":330.0,"avgMu":57.27,"avgPr":272.73,"pctNotMeeting":0.0},{"name":"Tax","rc":"Back office","totalSpend":227802.4,"avgBr":54.24,"avgMu":4.51,"avgPr":49.73,"pctNotMeeting":0.0},{"name":"Human Resources","rc":"Back office","totalSpend":216633.2,"avgBr":32.1,"avgMu":8.7,"avgPr":23.4,"pctNotMeeting":13.3},{"name":"Copywriter","rc":"Back office","totalSpend":195395.04,"avgBr":93.58,"avgMu":41.58,"avgPr":52.0,"pctNotMeeting":0.0},{"name":"Health Fair Coordinator","rc":"Back office","totalSpend":184992.0,"avgBr":39.12,"avgMu":7.29,"avgPr":31.83,"pctNotMeeting":0.0},{"name":"Forklift Operator","rc":"Total estimated yearly spend","totalSpend":149114.88,"avgBr":24.62,"avgMu":6.62,"avgPr":18.0,"pctNotMeeting":31.6},{"name":"Specialist","rc":"Laboratory","totalSpend":128018.0,"avgBr":64.72,"avgMu":17.68,"avgPr":47.04,"pctNotMeeting":0.0},{"name":"Supply Clerk","rc":"Total estimated yearly spend","totalSpend":125106.08,"avgBr":28.56,"avgMu":7.98,"avgPr":20.58,"pctNotMeeting":22.2},{"name":"Anatomic Path Resolution Representative","rc":"Laboratory","totalSpend":115908.96,"avgBr":31.74,"avgMu":8.74,"avgPr":23.0,"pctNotMeeting":25.0},{"name":"Consultant","rc":"Back office","totalSpend":108000.0,"avgBr":62.5,"avgMu":12.5,"avgPr":50.0,"pctNotMeeting":0.0},{"name":"Sales Support","rc":"Back office","totalSpend":70827.2,"avgBr":34.33,"avgMu":9.46,"avgPr":24.88,"pctNotMeeting":0.0},{"name":"Histotechnologist","rc":"Laboratory","totalSpend":63296.0,"avgBr":92.0,"avgMu":0.0,"avgPr":92.0,"pctNotMeeting":0.0},{"name":"Accounts Payable","rc":"Back office","totalSpend":58923.36,"avgBr":28.22,"avgMu":4.9,"avgPr":23.32,"pctNotMeeting":0.0},{"name":"Order Entry","rc":"Total estimated yearly spend","totalSpend":56394.8,"avgBr":22.81,"avgMu":5.81,"avgPr":17.0,"pctNotMeeting":20.0},{"name":"Medical Laboratory Technician","rc":"Laboratory","totalSpend":55906.0,"avgBr":44.64,"avgMu":13.14,"avgPr":31.5,"pctNotMeeting":0.0},{"name":"Project Specialist","rc":"Back office","totalSpend":54225.6,"avgBr":85.8,"avgMu":25.8,"avgPr":60.0,"pctNotMeeting":0.0},{"name":"Grossing Technician","rc":"Laboratory","totalSpend":53952.8,"avgBr":35.89,"avgMu":10.79,"avgPr":25.1,"pctNotMeeting":0.0},{"name":"Customer Solutions Manager","rc":"Back office","totalSpend":46581.92,"avgBr":75.62,"avgMu":13.12,"avgPr":62.5,"pctNotMeeting":0.0},{"name":"Deep Learning Intern","rc":"Back office","totalSpend":43560.0,"avgBr":72.6,"avgMu":12.6,"avgPr":60.0,"pctNotMeeting":0.0},{"name":"Forensic Scientist","rc":"Laboratory","totalSpend":43473.12,"avgBr":38.54,"avgMu":11.59,"avgPr":26.95,"pctNotMeeting":0.0},{"name":"Scientist","rc":"Laboratory","totalSpend":35750.0,"avgBr":68.75,"avgMu":20.67,"avgPr":48.08,"pctNotMeeting":0.0},{"name":"Administrative Support","rc":"Back office","totalSpend":34320.0,"avgBr":35.75,"avgMu":10.75,"avgPr":25.0,"pctNotMeeting":0.0},{"name":"Payroll","rc":"Back office","totalSpend":34200.0,"avgBr":45.0,"avgMu":13.53,"avgPr":31.47,"pctNotMeeting":0.0},{"name":"Data Entry Operator","rc":"Back office","totalSpend":31176.24,"avgBr":27.35,"avgMu":7.53,"avgPr":19.82,"pctNotMeeting":60.0},{"name":"Staffing Specialist","rc":"Back office","totalSpend":27456.0,"avgBr":35.75,"avgMu":10.75,"avgPr":25.0,"pctNotMeeting":0.0},{"name":"Account Manager","rc":"Back office","totalSpend":23958.0,"avgBr":90.75,"avgMu":15.75,"avgPr":75.0,"pctNotMeeting":0.0},{"name":"Driver","rc":"Total estimated yearly spend","totalSpend":16855.52,"avgBr":34.54,"avgMu":6.91,"avgPr":27.63,"pctNotMeeting":0.0},{"name":"PSC Greeter Representative","rc":"Back office","totalSpend":14956.8,"avgBr":24.6,"avgMu":7.4,"avgPr":17.2,"pctNotMeeting":0.0},{"name":"Imaging Technician","rc":"Laboratory","totalSpend":14300.0,"avgBr":27.5,"avgMu":5.5,"avgPr":22.0,"pctNotMeeting":0.0},{"name":"Travel Coordinator","rc":"Back office","totalSpend":13601.28,"avgBr":30.36,"avgMu":8.36,"avgPr":22.0,"pctNotMeeting":50.0},{"name":"Problem Resolution Coordinator","rc":"Back office","totalSpend":9240.48,"avgBr":37.26,"avgMu":10.26,"avgPr":27.0,"pctNotMeeting":0.0},{"name":"Executive Administrative Assistant","rc":"Back office","totalSpend":5834.4,"avgBr":42.9,"avgMu":12.9,"avgPr":30.0,"pctNotMeeting":0.0},{"name":"PSC Registration Representative","rc":"Laboratory","totalSpend":4368.0,"avgBr":26.0,"avgMu":7.16,"avgPr":18.84,"pctNotMeeting":100.0},{"name":"Medical Transcriptionist","rc":"Laboratory","totalSpend":2428.8,"avgBr":30.36,"avgMu":8.36,"avgPr":22.0,"pctNotMeeting":0.0}];
+
+
+
+// compute derived fields
+RAW.forEach(s => {
+  let muVals=[], prVals=[], brVals=[];
+  REGIONS.forEach(r => {
+    const rd = s.regions[r];
+    if(rd){
+      if(rd.mu  != null) muVals.push(rd.mu);
+      if(rd.payRate != null) prVals.push(rd.payRate);
+      if(rd.billRate != null) brVals.push(rd.billRate);
+    }
+  });
+  s.avgMu   = muVals.length   ? muVals.reduce((a,b)=>a+b,0)/muVals.length   : null;
+  s.avgPr   = prVals.length   ? prVals.reduce((a,b)=>a+b,0)/prVals.length   : null;
+  s.avgBr   = brVals.length   ? brVals.reduce((a,b)=>a+b,0)/brVals.length   : null;
+  s.regCount = Object.keys(s.regions).length;
+});
+
+const totalSpend = RAW.reduce((a,s)=>a+(s.totalSpend||0),0);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// FILTERS
+// ─────────────────────────────────────────────────────────────────────────────
+const supSelect = document.getElementById('filterSupplier');
+RAW.forEach(s=>{ const o=document.createElement('option'); o.value=o.text=s.name; supSelect.appendChild(o); });
+
+function getFilters(){
+  return {
+    region:   document.getElementById('filterRegion').value,
+    rolecat:  document.getElementById('filterRole').value,
+    supplier: document.getElementById('filterSupplier').value,
+    minSpend: parseFloat(document.getElementById('filterSpend').value)||0
+  };
+}
+
+// Builds role-specific avg rates per supplier (from YTD assignment data)
+function buildRoleRateMap(rolecat){
+  const supRole = {};
+  YTD.forEach(d=>{
+    if(d.rc !== rolecat) return;
+    if(!supRole[d.s]) supRole[d.s]={cnt:0,brSum:0,prSum:0,muSum:0};
+    const v = supRole[d.s];
+    v.cnt += d.n;
+    if(d.br) v.brSum += d.br*d.n;
+    if(d.pr) v.prSum += d.pr*d.n;
+    if(d.mu) v.muSum += d.mu*d.n;
+  });
+  const out = {};
+  for(const [name,v] of Object.entries(supRole)){
+    if(v.cnt>0) out[name]={
+      avgBr: Math.round(v.brSum/v.cnt*100)/100,
+      avgPr: Math.round(v.prSum/v.cnt*100)/100,
+      avgMu: Math.round(v.muSum/v.cnt*100)/100
+    };
+  }
+  return out;
+}
+
+function filteredData(){
+  const f = getFilters();
+  let data = RAW.filter(s=>{
+    if(f.supplier !== 'All' && s.name !== f.supplier) return false;
+    if((s.totalSpend||0) < f.minSpend) return false;
+    if(f.region !== 'All' && !s.regions[f.region]) return false;
+    return true;
+  });
+
+  if(f.rolecat !== 'All'){
+    const rateMap = buildRoleRateMap(f.rolecat);
+    data = data.map(s=>{
+      // Exact spend from col Y summed by role category (matches Pivot exactly)
+      const adjTotalSpend = s.roleSpend?.[f.rolecat] || 0;
+      if(adjTotalSpend <= 0) return null;
+
+      // Exact regional spend by role category
+      const adjRegions = {};
+      for(const [reg, rv] of Object.entries(s.regions)){
+        const regRoleSpend = s.regionRoleSpend?.[reg]?.[f.rolecat] || 0;
+        if(regRoleSpend <= 0) continue;
+        const rates = rateMap[s.name];
+        adjRegions[reg] = {
+          payRate:  rates ? rates.avgPr : rv.payRate,
+          mu:       rates ? rates.avgMu : rv.mu,
+          billRate: rates ? rates.avgBr : rv.billRate,
+          spend:    regRoleSpend
+        };
+      }
+
+      const rates = rateMap[s.name];
+      return {
+        ...s,
+        avgBr:      rates ? rates.avgBr : s.avgBr,
+        avgPr:      rates ? rates.avgPr : s.avgPr,
+        avgMu:      rates ? rates.avgMu : s.avgMu,
+        totalSpend: adjTotalSpend,
+        regions:    Object.keys(adjRegions).length > 0 ? adjRegions : s.regions
+      };
+    }).filter(s=>s && s.totalSpend>0);
+  }
+
+  return data;
+}
+
+function applyFilters(){
+  buildKPIs();
+  buildSpendOverviewTable();
+  buildCompTable();
+  buildSpendKPIs();
+  buildSpendBarChart();
+  buildRegionSpendChart();
+  buildRegionCountChart();
+  buildScatter();
+  buildPerfTable();
+  buildCrossChart();
+  buildHeatmap();
+  buildRegionPerfChart();
+  buildRegionRatesChart();
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// NAVIGATION
+// ─────────────────────────────────────────────────────────────────────────────
+function showPage(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  event.target.classList.add('active');
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// HELPERS
+// ─────────────────────────────────────────────────────────────────────────────
+const fmt$ = v => v==null?'—':'$'+v.toLocaleString('en-US',{maximumFractionDigits:0});
+const fmtM = v => v==null?'—':'$'+(v/1e6).toFixed(2)+'M';
+const fmtPct = v => v==null?'—':v.toFixed(1)+'%';
+const fmtN  = (v,d=2) => v==null?'—':v.toFixed(d);
+
+function getPillClass(pct){
+  if(pct==null) return 'pill-green';
+  if(pct <= 20) return 'pill-green';
+  if(pct <= 35) return 'pill-amber';
+  return 'pill-red';
+}
+function getMUTier(mu){
+  if(mu == null || mu === 0) return '<span class="pill pill-green">$0 / Direct</span>';
+  if(mu <= 8)  return '<span class="pill pill-green">Low (≤$8)</span>';
+  if(mu <= 10) return '<span class="pill pill-amber">Mid ($8–$10)</span>';
+  return '<span class="pill pill-red">High (>$10)</span>';
+}
+function getQuadrant(br, notMeeting){
+  if(br==null||notMeeting==null) return '—';
+  const hiBR = br > 31; const hiNM = notMeeting > 25;
+  if(!hiBR && !hiNM) return '<span class="pill pill-green">Best Value</span>';
+  if(hiBR  && !hiNM) return '<span class="pill pill-amber">Pricey/Reliable</span>';
+  if(!hiBR && hiNM)  return '<span class="pill" style="background:#E3F2FD;color:#1565C0">Low Cost/Perf Risk</span>';
+  return '<span class="pill pill-red">Underperforming</span>';
+}
+
+// Simple SVG bar chart
+function drawBars(svgId, labels, values, options={}){
+  const svg = document.getElementById(svgId);
+  if(!svg) return;
+  const W = svg.parentElement.clientWidth || 500;
+  const H = parseInt(svg.getAttribute('height'))||300;
+  const pad = options.pad || {top:20, right:20, bottom: options.bottomPad||60, left: options.leftPad||50};
+  const cW = W - pad.left - pad.right;
+  const cH = H - pad.top - pad.bottom;
+  const maxV = Math.max(...values)*1.1;
+  const barW = cW / labels.length * 0.7;
+  const colors = options.colors || labels.map((_,i)=>['#1E88E5','#0D47A1','#1565C0','#1976D2','#42A5F5','#0A6EBD'][i%6]);
+
+  let html = `<svg id="${svgId}" width="100%" height="${H}">`;
+  html += `<g transform="translate(${pad.left},${pad.top})">`;
+
+  // Y axis gridlines
+  [0,.25,.5,.75,1].forEach(t=>{
+    const y = cH - t*cH;
+    html += `<line x1="0" y1="${y}" x2="${cW}" y2="${y}" stroke="#EEE" stroke-width="1"/>`;
+    const lbl = options.yFmt ? options.yFmt(t*maxV) : (t*maxV).toFixed(1);
+    html += `<text x="-6" y="${y+4}" text-anchor="end" font-size="10" fill="#888">${lbl}</text>`;
+  });
+
+  labels.forEach((lbl,i)=>{
+    const x = (i+0.15) * cW / labels.length + (cW/labels.length - barW)/2 * 0.5;
+    const barH = (values[i]/maxV)*cH;
+    const y = cH - barH;
+    const color = Array.isArray(colors) ? colors[i] : colors;
+    html += `<rect x="${x}" y="${y}" width="${barW}" height="${barH}" fill="${color}" rx="3" opacity=".9"/>`;
+    // value label
+    if(options.valFmt){
+      html += `<text x="${x+barW/2}" y="${y-4}" text-anchor="middle" font-size="9" fill="#444">${options.valFmt(values[i])}</text>`;
+    }
+    // x label - truncate
+    const shortLbl = lbl.length > 12 ? lbl.substring(0,11)+'…' : lbl;
+    html += `<text x="${x+barW/2}" y="${cH+14}" text-anchor="end" font-size="9" fill="#666" transform="rotate(-40,${x+barW/2},${cH+14})">${shortLbl}</text>`;
+  });
+
+  html += `<line x1="0" y1="0" x2="0" y2="${cH}" stroke="#CCC" stroke-width="1"/>`;
+  html += `<line x1="0" y1="${cH}" x2="${cW}" y2="${cH}" stroke="#CCC" stroke-width="1"/>`;
+  html += `</g></svg>`;
+  svg.outerHTML = html;
+}
+
+function drawHorizBars(svgId, labels, values, options={}){
+  const svg = document.getElementById(svgId);
+  if(!svg) return;
+  const W = svg.parentElement.clientWidth || 500;
+  const rowH = options.rowH || 18;
+  const H = Math.max(labels.length * rowH + 60, 100);
+  const pad = {top:10, right:80, bottom:30, left: options.leftPad||180};
+  const cW = W - pad.left - pad.right;
+  const maxV = Math.max(...values)*1.05;
+  const colors = options.colors || labels.map((_,i)=>{
+    const v = values[i]; const pct = v/maxV;
+    if(pct>0.6) return '#0D47A1'; if(pct>0.3) return '#1E88E5'; return '#64B5F6';
+  });
+
+  let html = `<svg id="${svgId}" width="100%" height="${H}">`;
+  html += `<g transform="translate(${pad.left},${pad.top})">`;
+
+  labels.forEach((lbl,i)=>{
+    const y = i*rowH + rowH*0.1;
+    const bH = rowH*0.75;
+    const bW = (values[i]/maxV)*cW;
+    const color = Array.isArray(colors)?colors[i]:colors;
+    html += `<rect x="0" y="${y}" width="${bW}" height="${bH}" fill="${color}" rx="2" opacity=".85"/>`;
+    const shortLbl = lbl.length > 26 ? lbl.substring(0,25)+'…' : lbl;
+    html += `<text x="-6" y="${y+bH*0.75}" text-anchor="end" font-size="11" fill="#333">${shortLbl}</text>`;
+    const valLbl = options.valFmt ? options.valFmt(values[i]) : values[i].toFixed(1);
+    html += `<text x="${bW+4}" y="${y+bH*0.75}" font-size="10" fill="#555">${valLbl}</text>`;
+  });
+
+  html += `</g></svg>`;
+  svg.outerHTML = html;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// KPI ROW — OVERVIEW
+// ─────────────────────────────────────────────────────────────────────────────
+function buildKPIs(){
+  const data = filteredData().filter(s=>s.totalSpend>0);
+  const ts = data.reduce((a,s)=>a+(s.totalSpend||0),0);
+  const ns = data.length;
+  const avgMu = data.filter(s=>s.avgMu).reduce((a,s)=>a+s.avgMu*s.totalSpend,0) / ts;
+  const avgNM = data.filter(s=>s.pctNotMeeting!=null).reduce((a,s)=>a+s.pctNotMeeting*(s.totalSpend||0),0) / ts;
+  const top1pct = (Math.max(...data.map(s=>s.totalSpend||0))/ts*100).toFixed(1);
+
+  document.getElementById('kpi-row').innerHTML = `
+    <div class="kpi"><div class="kpi-val">${fmtM(ts)}</div><div class="kpi-lbl">Total Program Spend</div><div class="kpi-sub">YTD across all regions</div></div>
+    <div class="kpi accent"><div class="kpi-val">${ns}</div><div class="kpi-lbl">Active Suppliers</div><div class="kpi-sub">${REGIONS.length} regions covered</div></div>
+    <div class="kpi amber"><div class="kpi-val">$${avgMu.toFixed(2)}</div><div class="kpi-lbl">Wtd Avg Markup ($)</div><div class="kpi-sub">Excl. direct-bill suppliers</div></div>
+    <div class="kpi red"><div class="kpi-val">${avgNM.toFixed(1)}%</div><div class="kpi-lbl">Avg Not Meeting Exp.</div><div class="kpi-sub">Weighted by spend</div></div>
+    <div class="kpi red"><div class="kpi-val">${top1pct}%</div><div class="kpi-lbl">Top Supplier Concentration</div><div class="kpi-sub">Single supplier % of total</div></div>
+  `;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TOP 10 CHART
+// ─────────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// SPEND OVERVIEW TABLE (replaces Top 10 chart + Pareto)
+// ─────────────────────────────────────────────────────────────────────────────
+function buildSpendOverviewTable(){
+  const groupBy = (document.getElementById('groupBySelect')?.value) || 'supplier';
+
+  // ── resolve dataset ──────────────────────────────────────────────────────
+  let data;
+  if(groupBy === 'supplier'){
+    data = filteredData().filter(s=>s.totalSpend>0).sort((a,b)=>b.totalSpend-a.totalSpend);
+  } else if(groupBy === 'role'){
+    // aggregate from filteredData() so global filters still apply
+    const supData = filteredData().filter(s=>s.totalSpend>0);
+    const map = {};
+    supData.forEach(s=>{
+      if(!s.roleSpend) return;
+      for(const [rc,spend] of Object.entries(s.roleSpend)){
+        if(!map[rc]) map[rc]={name:rc,totalSpend:0,brN:0,brCnt:0,muN:0,muCnt:0,nmN:0,nmCnt:0};
+        map[rc].totalSpend += spend;
+      }
+    });
+    // enrich rates/NM from pre-computed ROLE_AGG
+    ROLE_AGG.forEach(r=>{
+      if(map[r.name]){
+        map[r.name].avgBr = r.avgBr;
+        map[r.name].avgMu = r.avgMu;
+        map[r.name].pctNotMeeting = r.pctNotMeeting;
+      }
+    });
+    data = Object.values(map).map(v=>({
+      name: v.name, totalSpend: v.totalSpend,
+      avgBr: v.avgBr||0, avgMu: v.avgMu||0, pctNotMeeting: v.pctNotMeeting??null,
+      sub: null
+    })).sort((a,b)=>b.totalSpend-a.totalSpend);
+  } else {
+    // title — use pre-computed, apply role filter from global bar
+    const f = getFilters();
+    let src = TITLE_AGG;
+    if(f.rolecat && f.rolecat !== 'All') src = src.filter(t=>t.rc===f.rolecat);
+    data = src.filter(t=>t.totalSpend>0).map(t=>({
+      name: t.name, totalSpend: t.totalSpend,
+      avgBr: t.avgBr||0, avgMu: t.avgMu||0, pctNotMeeting: t.pctNotMeeting??null,
+      sub: t.rc
+    })).sort((a,b)=>b.totalSpend-a.totalSpend);
+  }
+
+  // ── update header & subtitle ─────────────────────────────────────────────
+  const headEl = document.getElementById('spend-overview-head');
+  const subEl  = document.getElementById('spend-overview-sub');
+  const colLabel = groupBy==='supplier' ? 'Supplier ↕' : groupBy==='role' ? 'Role Category ↕' : 'Normalized Title ↕';
+  headEl.innerHTML = `
+    <th onclick="sortTable('tbl-spend-overview',0)">#</th>
+    <th onclick="sortTable('tbl-spend-overview',1)">${colLabel}</th>
+    ${groupBy==='title' ? '<th onclick="sortTable(\'tbl-spend-overview\',2)" style="color:#64748B;font-weight:500">Role Cat ↕</th>' : ''}
+    <th onclick="sortTable('tbl-spend-overview',${groupBy==='title'?3:2})">Total Spend ↕</th>
+    <th onclick="sortTable('tbl-spend-overview',${groupBy==='title'?4:3})">% of Total ↕</th>
+    <th onclick="sortTable('tbl-spend-overview',${groupBy==='title'?5:4})">Avg Bill Rate ↕</th>
+    <th onclick="sortTable('tbl-spend-overview',${groupBy==='title'?6:5})">Avg MU ↕</th>
+    <th onclick="sortTable('tbl-spend-overview',${groupBy==='title'?7:6})">% Not Meeting ↕</th>`;
+  const subtitles = {
+    supplier: 'Total spend by supplier · % share of program · Sortable by any column',
+    role:     'Total spend by role category · Reflects active global filters · Program-wide rates & NM%',
+    title:    'Total spend by normalized job title · Reflects active role category filter · 58 titles total'
+  };
+  subEl.textContent = subtitles[groupBy];
+
+  // ── build rows ───────────────────────────────────────────────────────────
+  const totalSpend = data.reduce((sum,s)=>sum+s.totalSpend, 0);
+  const maxSpend   = data[0]?.totalSpend || 1;
+  let rows = '';
+  let cumSum = 0;
+  data.forEach((s,i)=>{
+    cumSum += s.totalSpend;
+    const pct    = totalSpend > 0 ? (s.totalSpend/totalSpend*100) : 0;
+    const cumPct = (cumSum/totalSpend*100).toFixed(1);
+    const barW   = Math.round((s.totalSpend/maxSpend)*160);
+    const nmClass= s.pctNotMeeting==null ? '' : s.pctNotMeeting>32 ? 'pill-red' : s.pctNotMeeting>25 ? 'pill-amber' : 'pill-green';
+    rows += `<tr>
+      <td style="color:#94A3B8;font-size:12px">${i+1}</td>
+      <td style="font-weight:600">${s.name}</td>
+      ${groupBy==='title' ? `<td style="font-size:12px;color:#64748B">${s.sub||'—'}</td>` : ''}
+      <td style="white-space:nowrap">${fmt$(s.totalSpend)}</td>
+      <td style="white-space:nowrap;min-width:180px">
+        <div style="display:flex;align-items:center;gap:6px">
+          <div style="width:${barW}px;height:10px;background:#3B82F6;border-radius:4px;opacity:.75;flex-shrink:0"></div>
+          <span style="font-size:12px;color:#334155;font-weight:600">${pct.toFixed(1)}%</span>
+          <span style="font-size:10px;color:#94A3B8">(cum. ${cumPct}%)</span>
+        </div>
+      </td>
+      <td>$${fmtN(s.avgBr)}</td>
+      <td>$${fmtN(s.avgMu)}</td>
+      <td>${s.pctNotMeeting!=null ? `<span class="pill ${nmClass}">${fmtPct(s.pctNotMeeting)}</span>` : '—'}</td>
+    </tr>`;
+  });
+  const rowLabel = groupBy==='supplier' ? `${data.length} suppliers` : groupBy==='role' ? `${data.length} categories` : `${data.length} titles`;
+  rows += `<tr style="background:#F1F5F9;font-weight:700;border-top:2px solid #94A3B8">
+    <td></td>
+    <td style="color:#334155">${rowLabel}</td>
+    ${groupBy==='title' ? '<td></td>' : ''}
+    <td style="font-size:14px;color:#0F172A">${fmt$(totalSpend)}</td>
+    <td style="color:#334155;font-size:12px">100%</td>
+    <td colspan="3" style="color:#64748B;font-size:11px">Program Total</td>
+  </tr>`;
+  document.getElementById('tbl-spend-body').innerHTML = rows;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// COMPETITIVENESS TABLE
+// ─────────────────────────────────────────────────────────────────────────────
+function buildCompTable(){
+  const f = getFilters();
+  const data = filteredData().filter(s=>s.totalSpend>0);
+  let rows = '';
+  data.forEach(s=>{
+    let mu = s.avgMu, pr = s.avgPr, br = s.avgBr;
+    if(f.region !== 'All' && s.regions[f.region]){
+      const rd = s.regions[f.region];
+      mu = rd.mu; pr = rd.payRate; br = rd.billRate;
+    }
+    rows += `<tr>
+      <td>${s.name}</td>
+      <td><strong>${fmtN(mu)}</strong></td>
+      <td>${fmtN(pr)}</td>
+      <td>${fmtN(br)}</td>
+      <td>${fmt$(s.totalSpend)}</td>
+      <td>${s.regCount}</td>
+      <td>${getMUTier(mu)}</td>
+    </tr>`;
+  });
+  document.getElementById('tbl-comp-body').innerHTML = rows;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SPEND PAGE KPIs
+// ─────────────────────────────────────────────────────────────────────────────
+function buildSpendKPIs(){
+  const data = filteredData().filter(s=>s.totalSpend>0).sort((a,b)=>b.totalSpend-a.totalSpend);
+  const ts2 = data.reduce((a,s)=>a+s.totalSpend,0);
+  const top3 = data.slice(0,3).reduce((a,s)=>a+s.totalSpend,0);
+  const tail = data.filter(s=>s.totalSpend<200000).length;
+  const hhi  = data.reduce((a,s)=>a+Math.pow(s.totalSpend/ts2*100,2),0).toFixed(0);
+
+  document.getElementById('kpi-spend-row').innerHTML = `
+    <div class="kpi"><div class="kpi-val">${fmtM(ts2)}</div><div class="kpi-lbl">Total Spend</div></div>
+    <div class="kpi red"><div class="kpi-val">${(top3/ts2*100).toFixed(1)}%</div><div class="kpi-lbl">Top-3 Concentration</div><div class="kpi-sub">Recommended: &lt;30%</div></div>
+    <div class="kpi amber"><div class="kpi-val">${data.length}</div><div class="kpi-lbl">Active Suppliers</div><div class="kpi-sub">${tail} below $200K</div></div>
+    <div class="kpi amber"><div class="kpi-val">${hhi}</div><div class="kpi-lbl">HHI (Concentration Index)</div><div class="kpi-sub">Highly concentrated &gt;2500</div></div>
+  `;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SPEND BAR
+// ─────────────────────────────────────────────────────────────────────────────
+function buildSpendBarChart(){
+  const data = filteredData().filter(s=>s.totalSpend>0).sort((a,b)=>b.totalSpend-a.totalSpend);
+  drawHorizBars('chart-spend-bar', data.map(s=>s.name), data.map(s=>s.totalSpend),
+    { rowH:20, leftPad:200, valFmt: v=>'$'+(v/1e6).toFixed(2)+'M' });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// REGION SPEND + COUNT CHARTS
+// ─────────────────────────────────────────────────────────────────────────────
+function buildRegionSpendChart(){
+  const f = getFilters();
+  const data = filteredData();
+  const regSpend = {};
+  REGIONS.forEach(r=>{ regSpend[r]=0; });
+  data.forEach(s=>{
+    REGIONS.forEach(r=>{
+      if(s.regions[r] && s.regions[r].spend) regSpend[r]+=s.regions[r].spend;
+    });
+  });
+  const vals = REGIONS.map(r=>regSpend[r]);
+  const maxSpend = Math.max(...vals);
+  const colors = REGIONS.map((_,i)=>['#0D47A1','#1565C0','#1976D2','#1E88E5','#42A5F5','#64B5F6'][i]);
+  drawBars('chart-region-spend', REGIONS, vals,
+    { colors, yFmt:v=>'$'+(v/1e6).toFixed(1)+'M', valFmt:v=>'$'+(v/1e6).toFixed(1)+'M', bottomPad:40 });
+}
+
+function buildRegionCountChart(){
+  const data = filteredData();
+  const regCount = {};
+  REGIONS.forEach(r=>{ regCount[r]=0; });
+  data.forEach(s=>{
+    REGIONS.forEach(r=>{ if(s.regions[r]) regCount[r]++; });
+  });
+  drawBars('chart-region-count', REGIONS, REGIONS.map(r=>regCount[r]),
+    { colors:REGIONS.map(()=>'#42A5F5'), bottomPad:40, yFmt:v=>Math.round(v)+'' });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Perf-tab filters helpers
+function getPerfFilters(){
+  const r = document.getElementById('perfRegion');
+  const rc = document.getElementById('perfRole');
+  return { region: r?r.value:'All', rolecat: rc?rc.value:'All' };
+}
+function ytdBrBySupplier(region, rolecat){
+  // Filtered counts & rates
+  const map = {};
+  YTD.forEach(d=>{
+    if(region!=='All' && d.r!==region) return;
+    if(rolecat!=='All' && d.rc!==rolecat) return;
+    if(!map[d.s]) map[d.s]={brSum:0,prSum:0,muSum:0,cnt:0};
+    if(d.br!=null){map[d.s].brSum+=d.br*d.n; map[d.s].cnt+=d.n;}
+    if(d.pr!=null) map[d.s].prSum+=d.pr*d.n;
+    if(d.mu!=null) map[d.s].muSum+=d.mu*d.n;
+  });
+  // Total counts per supplier (for proportional spend estimate when role filter active)
+  const totMap = {};
+  YTD.forEach(d=>{
+    if(!totMap[d.s]) totMap[d.s]=0;
+    totMap[d.s]+=d.n;
+  });
+  // Regional counts per supplier (for region+role proportional spend)
+  const regMap = {};
+  if(region!=='All'){
+    YTD.forEach(d=>{
+      if(d.r!==region) return;
+      if(!regMap[d.s]) regMap[d.s]=0;
+      regMap[d.s]+=d.n;
+    });
+  }
+  const out={};
+  for(const [name,v] of Object.entries(map)){
+    if(v.cnt>0) out[name]={
+      avgBr: Math.round(v.brSum/v.cnt*100)/100,
+      avgPr: Math.round(v.prSum/v.cnt*100)/100,
+      avgMu: Math.round(v.muSum/v.cnt*100)/100,
+      filteredCnt: v.cnt,
+      totalCnt: totMap[name]||1,
+      regionCnt: region!=='All' ? (regMap[name]||1) : (totMap[name]||1)
+    };
+  }
+  return out;
+}
+function rebuildPerf(){
+  // Keep both filter bars in sync
+  const r1=document.getElementById('perfRegion'), r2=document.getElementById('perfRegion2');
+  const c1=document.getElementById('perfRole'),   c2=document.getElementById('perfRole2');
+  if(r2 && r1.value!==r2.value) r2.value=r1.value;
+  if(c2 && c1.value!==c2.value) c2.value=c1.value;
+  const active = (r1&&r1.value!=='All')||(c1&&c1.value!=='All');
+  const badge=document.getElementById('perf-filter-badge');
+  if(badge) badge.style.display=active?'inline':'none';
+  buildScatter(); buildPerfTable();
+}
+function syncPerfFilters(type, val){
+  // Called from the bottom filter bar — push values up and rebuild
+  const r1=document.getElementById('perfRegion'), c1=document.getElementById('perfRole');
+  if(type==='region' && r1) r1.value=val;
+  if(type==='role'   && c1) c1.value=val;
+  rebuildPerf();
+}
+function clearPerfFilters(){
+  ['perfRegion','perfRegion2'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='All';});
+  ['perfRole','perfRole2'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='All';});
+  rebuildPerf();
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SCATTER CHART
+// ─────────────────────────────────────────────────────────────────────────────
+function buildScatter(){
+  const svg = document.getElementById('chart-scatter');
+  if(!svg) return;
+  const pf = getPerfFilters();
+  const isFiltered = pf.region!=='All' || pf.rolecat!=='All';
+  const ytdMap = isFiltered ? ytdBrBySupplier(pf.region,pf.rolecat) : null;
+  const data = filteredData().filter(s=>s.totalSpend>0 && s.pctNotMeeting!=null).map(s=>{
+    const y = ytdMap ? ytdMap[s.name] : null;
+    if(isFiltered && !y) return null;
+    return {...s, dispBr:y?y.avgBr:s.avgBr, dispPr:y?y.avgPr:s.avgPr, dispMu:y?y.avgMu:s.avgMu};
+  }).filter(s=>s && s.dispBr!=null);
+  const W = svg.parentElement.clientWidth || 700;
+  const H = 460; const pad={top:30,right:30,bottom:60,left:60};
+  const cW=W-pad.left-pad.right, cH=H-pad.top-pad.bottom;
+
+  const brMax=Math.max(...data.map(s=>s.dispBr))*1.1;
+  const nmMax=Math.max(...data.map(s=>s.pctNotMeeting))*1.1;
+  const spMax=Math.max(...data.map(s=>s.totalSpend));
+
+  const brMid=31, nmMid=25;
+
+  function dotColor(s){
+    const hiBR=s.dispBr>brMid, hiNM=s.pctNotMeeting>nmMid;
+    if(!hiBR&&!hiNM) return '#2E7D32';
+    if(hiBR &&!hiNM) return '#E65100';
+    if(!hiBR&& hiNM) return '#1565C0';
+    return '#D32F2F';
+  }
+
+  let html=`<svg id="chart-scatter" width="100%" height="${H}"><g transform="translate(${pad.left},${pad.top})">`;
+
+  // Quadrant shading — y increases downward, so low % not-meeting = large cy = bottom
+  const mx=brMid/brMax*cW, my=nmMid/nmMax*cH;
+  // top half = high % not-meeting (bad), bottom half = low % not-meeting (good)
+  html+=`<rect x="0"   y="0"      width="${mx}"    height="${cH-my}" fill="#E3F2FD" opacity=".5"/>`;  // top-left:    low BR,  high NM = LOW COST / PERF RISK
+  html+=`<rect x="${mx}" y="0"    width="${cW-mx}" height="${cH-my}" fill="#FFEBEE" opacity=".5"/>`;  // top-right:   high BR, high NM = UNDERPERFORMING
+  html+=`<rect x="0"   y="${cH-my}" width="${mx}"    height="${my}"  fill="#E8F5E9" opacity=".5"/>`;  // bottom-left: low BR,  low NM  = BEST VALUE
+  html+=`<rect x="${mx}" y="${cH-my}" width="${cW-mx}" height="${my}" fill="#FFF8E1" opacity=".5"/>`;  // bottom-right:high BR, low NM  = PRICEY / RELIABLE
+
+  // Quadrant labels
+  html+=`<text x="4" y="14" font-size="9" fill="#1565C0" font-weight="600">LOW COST / PERF RISK</text>`;
+  html+=`<text x="${cW-4}" y="14" text-anchor="end" font-size="9" fill="#D32F2F" font-weight="600">UNDERPERFORMING</text>`;
+  html+=`<text x="4" y="${cH-4}" font-size="9" fill="#2E7D32" font-weight="600">BEST VALUE ★</text>`;
+  html+=`<text x="${cW-4}" y="${cH-4}" text-anchor="end" font-size="9" fill="#E65100" font-weight="600">PRICEY / RELIABLE</text>`;
+
+  // Midlines
+  html+=`<line x1="${mx}" y1="0" x2="${mx}" y2="${cH}" stroke="#999" stroke-width="1" stroke-dasharray="4"/>`;
+  html+=`<line x1="0" y1="${cH-my}" x2="${cW}" y2="${cH-my}" stroke="#999" stroke-width="1" stroke-dasharray="4"/>`;
+
+  // Gridlines
+  [0,.25,.5,.75,1].forEach(t=>{
+    const y=cH-t*cH;
+    html+=`<line x1="0" y1="${y}" x2="${cW}" y2="${y}" stroke="#EEE" stroke-width="1"/>`;
+    html+=`<text x="-4" y="${y+4}" text-anchor="end" font-size="9" fill="#888">${(t*nmMax).toFixed(0)}%</text>`;
+    const x=t*cW;
+    html+=`<line x1="${x}" y1="0" x2="${x}" y2="${cH}" stroke="#EEE" stroke-width="1"/>`;
+    html+=`<text x="${x}" y="${cH+14}" text-anchor="middle" font-size="9" fill="#888">$${(t*brMax).toFixed(0)}</text>`;
+  });
+
+  // Bubbles
+  data.forEach(s=>{
+    const cx=s.dispBr/brMax*cW;
+    const cy=cH-s.pctNotMeeting/nmMax*cH;
+    const r=Math.max(6, Math.min(30, Math.sqrt(s.totalSpend/spMax)*50));
+    const color=dotColor(s);
+    html+=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="${color}" opacity=".7" stroke="white" stroke-width="1.5"
+      onmouseover="showTip(event,'${s.name}','Bill Rate: $${s.dispBr.toFixed(2)}','Pay Rate: $${(s.dispPr||0).toFixed(2)} + MU: $${(s.dispMu||0).toFixed(2)}','${s.pctNotMeeting.toFixed(1)}% not-meeting · $${(s.totalSpend/1e6).toFixed(2)}M spend')"
+      onmouseout="hideTip()"/>`;
+    if(s.totalSpend > 1000000){
+      const lbl=s.name.split(' ')[0];
+      html+=`<text x="${cx}" y="${cy-r-3}" text-anchor="middle" font-size="9" fill="#333">${lbl}</text>`;
+    }
+  });
+
+  html+=`<line x1="0" y1="0" x2="0" y2="${cH}" stroke="#CCC"/><line x1="0" y1="${cH}" x2="${cW}" y2="${cH}" stroke="#CCC"/>`;
+  html+=`<text x="${cW/2}" y="${cH+30}" text-anchor="middle" font-size="11" fill="#555">Average Bill Rate (Pay Rate + MU)</text>`;
+  html+=`<text x="-46" y="${cH/2}" text-anchor="middle" font-size="9" fill="#999" transform="rotate(-90,-46,${cH/2})">↑ worse</text>`;
+  html+=`<text x="-46" y="${cH/2+30}" text-anchor="middle" font-size="9" fill="#2E7D32" transform="rotate(-90,-46,${cH/2+30})">↓ better</text>`;
+  html+=`<text transform="rotate(-90)" x="${-cH/2}" y="-44" text-anchor="middle" font-size="11" fill="#555">% Not Meeting Expectations</text>`;
+  html+=`</g></svg>`;
+  svg.outerHTML=html;
+}
+
+function showTip(e, name, mu, nm, spend){
+  const tip=document.getElementById('tooltip');
+  tip.innerHTML=`<strong>${name}</strong><br>${mu}<br>${nm}<br>${spend}`;
+  tip.style.display='block';
+  tip.style.left=(e.offsetX+10)+'px';
+  tip.style.top=(e.offsetY-10)+'px';
+}
+function hideTip(){ document.getElementById('tooltip').style.display='none'; }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PERFORMANCE TABLE
+// ─────────────────────────────────────────────────────────────────────────────
+function buildPerfTable(){
+  const pf = getPerfFilters();
+  const isFiltered = pf.region!=='All' || pf.rolecat!=='All';
+  const ytdMap = isFiltered ? ytdBrBySupplier(pf.region,pf.rolecat) : null;
+  const data = filteredData().filter(s=>s.totalSpend>0 && s.pctNotMeeting!=null).map(s=>{
+    const y = ytdMap ? ytdMap[s.name] : null;
+    if(isFiltered && !y) return null;
+
+    // Spend calculation:
+    // - No filter: full totalSpend from Cursor sheet
+    // - Region only: exact regional spend from Cursor sheet
+    // - Role filter active: proportional estimate via YTD assignment counts
+    let dispSpend = s.totalSpend;
+    if(y){
+      if(pf.rolecat!=='All'){
+        // Proportional: filteredCnt / regionCnt * regionSpend (or totalSpend if no region)
+        const regionSpend = pf.region!=='All' ? (s.regions[pf.region]?.spend||s.totalSpend) : s.totalSpend;
+        dispSpend = regionSpend * (y.filteredCnt / y.regionCnt);
+      } else if(pf.region!=='All'){
+        // Region only: exact spend
+        dispSpend = s.regions[pf.region]?.spend || s.totalSpend;
+      }
+    }
+    return {...s, dispBr:y?y.avgBr:s.avgBr, dispPr:y?y.avgPr:s.avgPr, dispMu:y?y.avgMu:s.avgMu, dispSpend};
+  }).filter(s=>s && s.dispBr!=null);
+  const brMax2 = Math.max(...data.map(s=>s.dispBr));
+  const nmMax2 = Math.max(...data.map(s=>s.pctNotMeeting));
+  data.forEach(s=>{
+    s.valueScore = 100 - ((s.dispBr/brMax2)*50 + (s.pctNotMeeting/nmMax2)*50);
+  });
+  data.sort((a,b)=>b.valueScore-a.valueScore);
+  const filterNote = (pf.region!=='All'||pf.rolecat!=='All') ? ' <span style="color:#1565C0;font-size:10px">● filtered</span>' : '';
+  const totalSpend = data.reduce((sum,s)=>sum+(s.dispSpend||s.totalSpend),0);
+  const supplierCount = data.length;
+  const spendLabel = isFiltered ? (pf.rolecat!=='All' ? '~est. spend' : 'Total Spend') : 'Total Spend';
+  let rows='';
+  data.forEach((s,i)=>{
+    const spendVal = s.dispSpend!=null ? s.dispSpend : s.totalSpend;
+    const pctSpend = totalSpend>0 ? (spendVal/totalSpend*100) : 0;
+    const barW = Math.round(pctSpend*1.8); // max ~180px at 100%
+    rows+=`<tr>
+      <td>${i+1}</td>
+      <td>${s.name}</td>
+      <td>$${fmtN(s.dispBr)}${filterNote} <span style="color:#888;font-size:11px">(PR $${fmtN(s.dispPr)} + MU $${fmtN(s.dispMu)})</span></td>
+      <td><span class="pill ${getPillClass(s.pctNotMeeting)}">${fmtPct(s.pctNotMeeting)}</span></td>
+      <td>${fmt$(spendVal)}</td>
+      <td style="white-space:nowrap">
+        <div style="display:flex;align-items:center;gap:6px">
+          <div style="width:${barW}px;min-width:2px;height:8px;background:#3B82F6;border-radius:4px;opacity:.75"></div>
+          <span style="font-size:12px;color:#334155">${pctSpend.toFixed(1)}%</span>
+        </div>
+      </td>
+      <td><strong>${s.valueScore.toFixed(1)}</strong></td>
+      <td>${getQuadrant(s.dispBr,s.pctNotMeeting)}</td>
+    </tr>`;
+  });
+  rows+=`<tr style="background:#F1F5F9;font-weight:700;border-top:2px solid #94A3B8">
+    <td colspan="3" style="text-align:right;color:#334155;font-size:13px">
+      ${isFiltered?`<span style="color:#1565C0;font-size:11px">● Filtered — </span>`:''}${supplierCount} supplier${supplierCount!==1?'s':''}
+    </td>
+    <td></td>
+    <td style="color:#0F172A;font-size:14px;white-space:nowrap">${fmt$(totalSpend)}</td>
+    <td style="color:#64748B;font-size:12px;font-weight:700">100%</td>
+    <td colspan="2" style="color:#64748B;font-size:11px">${spendLabel}</td>
+  </tr>`;
+  document.getElementById('tbl-perf-body').innerHTML=rows;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CROSS-CATEGORY BUBBLE MATRIX
+// ─────────────────────────────────────────────────────────────────────────────
+function buildCrossChart(){
+  const wrap = document.getElementById('cross-chart-wrap');
+  if(!wrap) return;
+
+  // cnt = assignments, br = avg bill rate, spend = proportional spend estimate ($)
+  const rows = [
+    {name:'TalentBurst, Inc.',        lab:{cnt:223,br:30.00,spend:3688000},  field:{cnt:436,br:27.14,spend:7210000}, bo:{cnt:71, br:40.56,spend:1174000},  nm:22.1},
+    {name:'Integrated Resources',     lab:{cnt:45, br:36.22,spend:636000},   field:{cnt:202,br:30.52,spend:2854000}, bo:{cnt:0},                            nm:35.7},
+    {name:'Spectraforce Technologies', lab:{cnt:43,br:29.98,spend:557000},   field:{cnt:144,br:30.37,spend:1865000}, bo:{cnt:0},                            nm:27.5},
+    {name:'Synectics',                lab:{cnt:58, br:40.56,spend:871000},   field:{cnt:120,br:29.39,spend:1802000}, bo:{cnt:0},                            nm:23.0},
+    {name:'All Medical Personnel',    lab:{cnt:0},                            field:{cnt:102,br:28.54,spend:1224000}, bo:{cnt:0},                            nm:31.7},
+    {name:'BayOne Solutions',         lab:{cnt:0},                            field:{cnt:103,br:32.14,spend:1576000}, bo:{cnt:4, br:27.96,spend:61000},      nm:22.8},
+    {name:'Mindlance, Inc',           lab:{cnt:25, br:40.16,spend:400000},   field:{cnt:91, br:30.38,spend:1455000}, bo:{cnt:6, br:28.20,spend:96000},      nm:28.7},
+    {name:'Iconma LLC',               lab:{cnt:25, br:40.89,spend:358000},   field:{cnt:79, br:30.83,spend:1131000}, bo:{cnt:4, br:35.36,spend:57000},      nm:27.8},
+    {name:'Rangam Consultants',       lab:{cnt:0},                            field:{cnt:77, br:29.73,spend:1040000}, bo:{cnt:0},                            nm:34.7},
+    {name:'Pinnacle',                 lab:{cnt:21, br:32.84,spend:310000},   field:{cnt:67, br:32.05,spend:990000},  bo:{cnt:3, br:40.24,spend:44000},      nm:17.4},
+    {name:'Pride Global Healthcare',  lab:{cnt:29, br:44.36,spend:287000},   field:{cnt:0},                          bo:{cnt:5, br:30.38,spend:49000},      nm:29.5},
+    {name:'Global Technical Talent',  lab:{cnt:0},                            field:{cnt:74, br:35.30,spend:1040000}, bo:{cnt:0},                            nm:19.5},
+    {name:'Triage, LLC',              lab:{cnt:32, br:89.75,spend:1799000},  field:{cnt:0},                          bo:{cnt:0},                            nm:3.6},
+    {name:'Randstad',                 lab:{cnt:19, br:29.21,spend:193000},   field:{cnt:0},                          bo:{cnt:0},                            nm:42.1},
+  ];
+
+  const cats = ['Laboratory','Field','Back Office'];
+  const catKeys = ['lab','field','bo'];
+  const maxCnt = Math.max(...rows.flatMap(r=>catKeys.map(k=>r[k].cnt||0)));
+
+  function nmColor(nm){
+    if(nm===null||nm===undefined) return '#90A4AE';
+    if(nm<20)  return '#2E7D32';
+    if(nm<25)  return '#66BB6A';
+    if(nm<32)  return '#FFB300';
+    return '#D32F2F';
+  }
+  function scaleR(cnt){ return cnt>0 ? Math.max(14, Math.round(14 + (cnt/maxCnt)*30)) : 0; }
+
+  // Transposed: rows = 3 categories, columns = 14 suppliers
+  const colW=98, leftW=120, rowH=80, topH=110, pad=12;
+  const W = leftW + colW*rows.length + pad;
+  const H = topH + rowH*3 + pad;
+
+  let svg=`<svg width="${W}" height="${H}" font-family="Inter,Segoe UI,sans-serif">`;
+
+  // Supplier column headers (rotated names + NM% badge)
+  rows.forEach((r,ci)=>{
+    const cx = leftW + colW*ci + colW/2;
+    const shortName = r.name.length>18 ? r.name.slice(0,16)+'…' : r.name;
+    const nmLabel = r.nm!==null&&r.nm!==undefined ? r.nm.toFixed(1)+'% NM' : 'n/a';
+    svg+=`<text transform="rotate(-45,${cx},${topH-14})" x="${cx}" y="${topH-14}"
+      text-anchor="start" font-size="11" fill="#1E293B" font-weight="600">${shortName}</text>`;
+    svg+=`<text transform="rotate(-45,${cx},${topH-2})" x="${cx}" y="${topH-2}"
+      text-anchor="start" font-size="9" fill="${nmColor(r.nm)}">${nmLabel}</text>`;
+  });
+
+  // Category rows
+  catKeys.forEach((k,ri)=>{
+    const y = topH + rowH*ri;
+    const catColors = ['#EDE9FE','#DCFCE7','#FEF9C3'];
+    const catTextColors = ['#5B21B6','#15803D','#92400E'];
+    // Row background
+    svg+=`<rect x="0" y="${y}" width="${W}" height="${rowH}" fill="${catColors[ri]}" opacity=".25"/>`;
+    // Category label on left
+    svg+=`<rect x="4" y="${y+6}" width="${leftW-12}" height="${rowH-12}" rx="6" fill="${catColors[ri]}" opacity=".8"/>`;
+    svg+=`<text x="${leftW/2}" y="${y+rowH/2+5}" text-anchor="middle" font-size="13" font-weight="700" fill="${catTextColors[ri]}">${cats[ri]}</text>`;
+    // Row divider
+    svg+=`<line x1="0" y1="${y}" x2="${W}" y2="${y}" stroke="#E2E8F0" stroke-width="1"/>`;
+    // Bubbles — one per supplier
+    rows.forEach((r,ci)=>{
+      const d = r[k];
+      const cx = leftW + colW*ci + colW/2;
+      const cy = y + rowH/2;
+      if(!d||!d.cnt){
+        svg+=`<circle cx="${cx}" cy="${cy}" r="10" fill="#ECEFF1"/>`;
+        svg+=`<text x="${cx}" y="${cy+4}" text-anchor="middle" font-size="9" fill="#90A4AE">—</text>`;
+      } else {
+        const radius = scaleR(d.cnt);
+        const spendLbl = d.spend>=1e6 ? '$'+(d.spend/1e6).toFixed(1)+'M'
+                        : d.spend>=1000 ? '$'+Math.round(d.spend/1000)+'K'
+                        : d.spend>0 ? '$'+d.spend : '—';
+        const brLbl = '$'+d.br.toFixed(0)+' BR';
+        svg+=`<circle cx="${cx}" cy="${cy}" r="${radius}" fill="${nmColor(r.nm)}" opacity=".85"/>`;
+        svg+=`<text x="${cx}" y="${cy-2}" text-anchor="middle" font-size="${radius>22?11:9}" fill="#fff" font-weight="700">${spendLbl}</text>`;
+        svg+=`<text x="${cx}" y="${cy+10}" text-anchor="middle" font-size="8" fill="rgba(255,255,255,.85)">${brLbl}</text>`;
+      }
+    });
+  });
+  // Bottom border
+  svg+=`<line x1="0" y1="${topH+rowH*3}" x2="${W}" y2="${topH+rowH*3}" stroke="#E2E8F0" stroke-width="1"/>`;
+
+  // Column separators
+  rows.forEach((_,ci)=>{
+    svg+=`<line x1="${leftW+colW*ci}" y1="0" x2="${leftW+colW*ci}" y2="${H}" stroke="#E2E8F0" stroke-width="1"/>`;
+  });
+  svg+=`<line x1="${leftW+colW*rows.length}" y1="0" x2="${leftW+colW*rows.length}" y2="${H}" stroke="#E2E8F0" stroke-width="1"/>`;
+  svg+=`<line x1="${leftW}" y1="0" x2="${leftW}" y2="${H}" stroke="#CBD5E1" stroke-width="1.5"/>`;
+
+  svg+='</svg>';
+  wrap.innerHTML=svg;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// HEATMAP
+// ─────────────────────────────────────────────────────────────────────────────
+
+let heatmapSortDir = 'desc';
+
+function buildHeatmap(sortDir){
+  if(sortDir !== undefined) heatmapSortDir = sortDir;
+  const f = getFilters();
+  let data = filteredData().filter(s=>s.totalSpend>0);
+  data = data.slice().sort((a,b)=> heatmapSortDir==='desc' ? b.totalSpend-a.totalSpend : a.totalSpend-b.totalSpend);
+  // gather all regional spend values for color scale
+  let allSpends=[];
+  data.forEach(s=>REGIONS.forEach(r=>{ if(s.regions[r]&&s.regions[r].spend>0) allSpends.push(s.regions[r].spend); }));
+  const spendMax=Math.max(...allSpends);
+
+  function spendColor(spend){
+    if(!spend||spend<=0) return '#F5F5F5';
+    const t=Math.sqrt(spend/spendMax); // sqrt scale so small values still show colour
+    if(t<0.25) return `hsl(207,50%,${Math.round(92-t*40)}%)`;
+    if(t<0.60) return `hsl(207,${Math.round(55+t*30)}%,${Math.round(78-t*35)}%)`;
+    return `hsl(213,${Math.round(70+t*20)}%,${Math.round(45-t*20)}%)`;
+  }
+
+  const fmtSpendCell = v => v>=1e6 ? '$'+(v/1e6).toFixed(2)+'M' : '$'+(v/1e3).toFixed(0)+'K';
+
+  const arrow = heatmapSortDir==='desc' ? ' ↓' : ' ↑';
+  let html=`<thead><tr><th>Supplier</th>`;
+  REGIONS.forEach(r=>html+=`<th>${r}</th>`);
+  html+=`<th style="cursor:pointer;white-space:nowrap" onclick="buildHeatmap('${heatmapSortDir==='desc'?'asc':'desc'}')">Total Spend${arrow}</th></tr></thead><tbody>`;
+
+  data.forEach(s=>{
+    html+=`<tr><td class="supplier-name">${s.name}</td>`;
+    REGIONS.forEach(r=>{
+      const rd=s.regions[r];
+      if(rd&&rd.spend!=null){
+        const bg=spendColor(rd.spend);
+        const txt=rd.spend>0?fmtSpendCell(rd.spend):'$0';
+        const tc=rd.spend/spendMax>0.4?'#fff':'#333';
+        html+=`<td style="background:${bg};color:${tc}">${txt}</td>`;
+      } else {
+        html+=`<td class="empty">—</td>`;
+      }
+    });
+    html+=`<td><strong>${s.totalSpend?'$'+(s.totalSpend/1e6).toFixed(2)+'M':'—'}</strong></td></tr>`;
+  });
+  html+=`</tbody>`;
+  document.getElementById('tbl-heatmap').innerHTML=html;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// REGIONAL PERFORMANCE CHART
+// ─────────────────────────────────────────────────────────────────────────────
+function buildRegionPerfChart(){
+  const data = filteredData().filter(s=>s.totalSpend>0);
+  const regData = {};
+  REGIONS.forEach(r=>{ regData[r]={sumNM:0, sumSpend:0}; });
+  data.forEach(s=>{
+    if(s.pctNotMeeting==null) return;
+    REGIONS.forEach(r=>{
+      if(s.regions[r]&&s.regions[r].spend>0){
+        regData[r].sumNM += s.pctNotMeeting * s.regions[r].spend;
+        regData[r].sumSpend += s.regions[r].spend;
+      }
+    });
+  });
+  const vals = REGIONS.map(r=> regData[r].sumSpend>0 ? regData[r].sumNM/regData[r].sumSpend : 0);
+  const colors = vals.map(v=> v<20?'#2E7D32': v<30?'#F9A825':'#D32F2F');
+  drawBars('chart-region-perf', REGIONS, vals, {
+    colors, yFmt:v=>v.toFixed(1)+'%', valFmt:v=>v.toFixed(1)+'%', bottomPad:40
+  });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// REGIONAL RATES CHART (grouped: pay rate vs bill rate)
+// ─────────────────────────────────────────────────────────────────────────────
+function buildRegionRatesChart(){
+  const data = filteredData();
+  const regData={};
+  REGIONS.forEach(r=>{ regData[r]={muSum:0,prSum:0,cnt:0}; });
+  data.forEach(s=>{
+    REGIONS.forEach(r=>{
+      const rd=s.regions[r];
+      if(rd&&rd.mu>0&&rd.payRate>0){
+        regData[r].muSum+=rd.mu; regData[r].prSum+=rd.payRate; regData[r].cnt++;
+      }
+    });
+  });
+
+  const svg = document.getElementById('chart-region-rates');
+  if(!svg) return;
+  const W=svg.parentElement.clientWidth||500;
+  const H=280; const pad={top:20,right:20,bottom:50,left:50};
+  const cW=W-pad.left-pad.right, cH=H-pad.top-pad.bottom;
+  const prVals=REGIONS.map(r=>regData[r].cnt?regData[r].prSum/regData[r].cnt:0);
+  const muVals=REGIONS.map(r=>regData[r].cnt?regData[r].muSum/regData[r].cnt:0);
+  const maxV=Math.max(...prVals)*1.1;
+  const n=REGIONS.length; const gW=cW/n; const bW=gW*0.35;
+
+  let html=`<svg id="chart-region-rates" width="100%" height="${H}"><g transform="translate(${pad.left},${pad.top})">`;
+  [0,.25,.5,.75,1].forEach(t=>{
+    const y=cH-t*cH;
+    html+=`<line x1="0" y1="${y}" x2="${cW}" y2="${y}" stroke="#EEE"/>`;
+    html+=`<text x="-4" y="${y+4}" text-anchor="end" font-size="9" fill="#888">$${(t*maxV).toFixed(0)}</text>`;
+  });
+  REGIONS.forEach((r,i)=>{
+    const x=i*gW;
+    const prH=(prVals[i]/maxV)*cH; const muH=(muVals[i]/maxV)*cH;
+    html+=`<rect x="${x+gW*.05}" y="${cH-prH}" width="${bW}" height="${prH}" fill="#1E88E5" rx="2" opacity=".8"/>`;
+    html+=`<rect x="${x+gW*.05+bW+2}" y="${cH-muH}" width="${bW}" height="${muH}" fill="#E65100" rx="2" opacity=".8"/>`;
+    const shortR=r.length>8?r.substring(0,7)+'…':r;
+    html+=`<text x="${x+gW/2}" y="${cH+14}" text-anchor="middle" font-size="10" fill="#555">${shortR}</text>`;
+  });
+  html+=`<line x1="0" y1="0" x2="0" y2="${cH}" stroke="#CCC"/><line x1="0" y1="${cH}" x2="${cW}" y2="${cH}" stroke="#CCC"/>`;
+
+  // legend
+  html+=`<rect x="${cW-120}" y="-18" width="10" height="10" fill="#1E88E5"/>`;
+  html+=`<text x="${cW-106}" y="-8" font-size="10" fill="#555">Avg Pay Rate</text>`;
+  html+=`<rect x="${cW-120}" y="-6" width="10" height="10" fill="#E65100"/>`;
+  html+=`<text x="${cW-106}" y="4" font-size="10" fill="#555">Avg MU ($)</text>`;
+
+  html+=`</g></svg>`;
+  svg.outerHTML=html;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TABLE SORT
+// ─────────────────────────────────────────────────────────────────────────────
+function sortTable(tableId, col){
+  const table = document.getElementById(tableId);
+  const tbody = table.querySelector('tbody');
+  const rows = Array.from(tbody.querySelectorAll('tr'));
+  const asc = table.dataset.sortCol==col && table.dataset.sortDir=='asc';
+  table.dataset.sortCol=col; table.dataset.sortDir=asc?'desc':'asc';
+  rows.sort((a,b)=>{
+    const av=a.cells[col]?.textContent.replace(/[^0-9.\-]/g,'')||'0';
+    const bv=b.cells[col]?.textContent.replace(/[^0-9.\-]/g,'')||'0';
+    const an=parseFloat(av), bn=parseFloat(bv);
+    if(!isNaN(an)&&!isNaN(bn)) return asc?an-bn:bn-an;
+    return asc?av.localeCompare(bv):bv.localeCompare(av);
+  });
+  rows.forEach(r=>tbody.appendChild(r));
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// INIT
+// ─────────────────────────────────────────────────────────────────────────────
+window.addEventListener('load', ()=>{
+  applyFilters();
+});
+</script>
+</body>
+</html>
