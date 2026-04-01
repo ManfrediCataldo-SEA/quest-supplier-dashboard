@@ -1209,13 +1209,17 @@ function buildMuRegionTable(){
     row += `<td style="padding:6px 10px;text-align:right;font-weight:600;white-space:nowrap;border-left:2px solid #93C5FD;background:#EFF6FF">${fmt$(s.totalSpend)}</td>`;
 
     if(delta!==null){
-      const dBg = delta>10?'rgba(239,68,68,.15)':delta>5?'rgba(249,115,22,.12)':'rgba(251,191,36,.15)';
+      const dHi = colMode==='region' ? 10 : 5;
+      const dMd = colMode==='region' ? 5  : 2;
+      const dBg = delta>dHi?'rgba(239,68,68,.15)':delta>dMd?'rgba(249,115,22,.12)':'rgba(251,191,36,.15)';
       row += `<td style="padding:6px 10px;text-align:center;font-weight:700;white-space:nowrap;border-left:2px solid #FCA5A5;background:${dBg};color:#92400E">${delta.toFixed(1)} pp</td>`;
     } else {
       row += `<td style="padding:6px 10px;text-align:center;border-left:2px solid #FCA5A5;background:#FFF7ED;color:#CBD5E1">—</td>`;
     }
 
-    if(savings>500){
+    // threshold: $500 for regions (large variation expected), $1 for titles (smaller variation)
+    const savingsThreshold = colMode === 'region' ? 500 : 1;
+    if(savings > savingsThreshold){
       const sBg = savings>100000?'rgba(21,128,61,.15)':savings>20000?'rgba(22,163,74,.1)':'rgba(134,239,172,.2)';
       row += `<td style="padding:6px 10px;text-align:right;font-weight:700;white-space:nowrap;border-left:2px solid #6EE7B7;background:${sBg};color:#166534">${fmt$(savings)}</td>`;
     } else {
