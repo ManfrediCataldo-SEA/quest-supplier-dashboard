@@ -184,17 +184,21 @@
 <!-- ════════════════════════════════════════════════════════════════ OVERVIEW -->
 <div id="page-overview" class="page active">
   <div class="kpi-row" id="kpi-row"></div>
-  <div class="two-col">
-    <div class="card">
-      <div class="card-title">Top 10 Suppliers by Spend</div>
-      <div class="card-sub">Total spend YTD — bubble size proportional to % not meeting expectations</div>
-      <div class="chart-wrap"><svg id="chart-top10" width="100%" height="300"></svg></div>
-    </div>
-    <div class="card">
-      <div class="card-title">Spend Concentration (Pareto)</div>
-      <div class="card-sub">Cumulative % of total spend by supplier rank</div>
-      <div class="chart-wrap"><svg id="chart-pareto" width="100%" height="300"></svg></div>
-    </div>
+  <div class="card">
+    <div class="card-title">Supplier Spend Overview — All Suppliers</div>
+    <div class="card-sub">Total spend by supplier · % share of program · Sortable by any column</div>
+    <div class="tbl-wrap"><table id="tbl-spend-overview">
+      <thead><tr>
+        <th onclick="sortTable('tbl-spend-overview',0)">#</th>
+        <th onclick="sortTable('tbl-spend-overview',1)">Supplier ↕</th>
+        <th onclick="sortTable('tbl-spend-overview',2)">Total Spend ↕</th>
+        <th onclick="sortTable('tbl-spend-overview',3)">% of Total ↕</th>
+        <th onclick="sortTable('tbl-spend-overview',4)">Avg Bill Rate ↕</th>
+        <th onclick="sortTable('tbl-spend-overview',5)">Avg MU ↕</th>
+        <th onclick="sortTable('tbl-spend-overview',6)">% Not Meeting ↕</th>
+      </tr></thead>
+      <tbody id="tbl-spend-body"></tbody>
+    </table></div>
   </div>
   <div class="card">
     <div class="card-title">Executive Summary — Key Findings</div>
@@ -713,8 +717,7 @@ function filteredData(){
 
 function applyFilters(){
   buildKPIs();
-  buildTop10Chart();
-  buildParetoChart();
+  buildSpendOverviewTable();
   buildCompTable();
   buildSpendKPIs();
   buildSpendBarChart();
@@ -868,54 +871,45 @@ function buildKPIs(){
 // ─────────────────────────────────────────────────────────────────────────────
 // TOP 10 CHART
 // ─────────────────────────────────────────────────────────────────────────────
-function buildTop10Chart(){
-  const data = filteredData().filter(s=>s.totalSpend>0).sort((a,b)=>b.totalSpend-a.totalSpend).slice(0,10);
-  drawBars('chart-top10', data.map(s=>s.name), data.map(s=>s.totalSpend),
-    { yFmt: v=>'$'+(v/1e6).toFixed(1)+'M', valFmt: v=>'$'+(v/1e6).toFixed(1)+'M', bottomPad:80 });
-}
-
 // ─────────────────────────────────────────────────────────────────────────────
-// PARETO CHART
+// SPEND OVERVIEW TABLE (replaces Top 10 chart + Pareto)
 // ─────────────────────────────────────────────────────────────────────────────
-function buildParetoChart(){
-  const svg = document.getElementById('chart-pareto');
-  if(!svg) return;
+function buildSpendOverviewTable(){
   const data = filteredData().filter(s=>s.totalSpend>0).sort((a,b)=>b.totalSpend-a.totalSpend);
-  const ts2 = data.reduce((a,s)=>a+s.totalSpend,0);
-  let cum = 0;
-  const cumPcts = data.map(s=>{ cum+=s.totalSpend; return cum/ts2*100; });
-
-  const W = svg.parentElement.clientWidth || 500;
-  const H = 300; const pad={top:20,right:20,bottom:60,left:50};
-  const cW=W-pad.left-pad.right, cH=H-pad.top-pad.bottom;
-  const n = data.length;
-
-  let html = `<svg id="chart-pareto" width="100%" height="${H}"><g transform="translate(${pad.left},${pad.top})">`;
-  // bars
+  const totalSpend = data.reduce((sum,s)=>sum+s.totalSpend, 0);
+  const maxSpend = data[0]?.totalSpend || 1;
+  let rows = '';
   data.forEach((s,i)=>{
-    const x = i*cW/n; const bW=cW/n*0.7;
-    const bH=(s.totalSpend/Math.max(...data.map(d=>d.totalSpend)))*cH;
-    html+=`<rect x="${x}" y="${cH-bH}" width="${bW}" height="${bH}" fill="#1E88E5" rx="2" opacity=".7"/>`;
-    const shortLbl = s.name.length>12 ? s.name.substring(0,11)+'…' : s.name;
-    html+=`<text x="${x+bW/2}" y="${cH+14}" text-anchor="end" font-size="9" fill="#666" transform="rotate(-40,${x+bW/2},${cH+14})">${shortLbl}</text>`;
+    const pct = totalSpend > 0 ? (s.totalSpend/totalSpend*100) : 0;
+    const barW = Math.round((s.totalSpend/maxSpend)*160);
+    const nmClass = s.pctNotMeeting==null ? '' : s.pctNotMeeting>32 ? 'pill-red' : s.pctNotMeeting>25 ? 'pill-amber' : 'pill-green';
+    const cumSpend = data.slice(0,i+1).reduce((a,d)=>a+d.totalSpend,0);
+    const cumPct = (cumSpend/totalSpend*100).toFixed(1);
+    rows += `<tr>
+      <td style="color:#94A3B8;font-size:12px">${i+1}</td>
+      <td style="font-weight:600">${s.name}</td>
+      <td style="white-space:nowrap">${fmt$(s.totalSpend)}</td>
+      <td style="white-space:nowrap;min-width:180px">
+        <div style="display:flex;align-items:center;gap:6px">
+          <div style="width:${barW}px;height:10px;background:#3B82F6;border-radius:4px;opacity:.75;flex-shrink:0"></div>
+          <span style="font-size:12px;color:#334155;font-weight:600">${pct.toFixed(1)}%</span>
+          <span style="font-size:10px;color:#94A3B8">(cum. ${cumPct}%)</span>
+        </div>
+      </td>
+      <td>$${fmtN(s.avgBr)}</td>
+      <td>$${fmtN(s.avgMu)}</td>
+      <td>${s.pctNotMeeting!=null ? `<span class="pill ${nmClass}">${fmtPct(s.pctNotMeeting)}</span>` : '—'}</td>
+    </tr>`;
   });
-  // cumulative line
-  let pts = cumPcts.map((p,i)=>{
-    const x=i*cW/n+cW/n*0.35; const y=cH-p/100*cH; return `${x},${y}`;
-  }).join(' ');
-  html+=`<polyline points="${pts}" fill="none" stroke="#D32F2F" stroke-width="2"/>`;
-  // 80% line
-  const y80 = cH - 0.8*cH;
-  html+=`<line x1="0" y1="${y80}" x2="${cW}" y2="${y80}" stroke="#E65100" stroke-width="1" stroke-dasharray="4"/>`;
-  html+=`<text x="${cW+2}" y="${y80+4}" font-size="9" fill="#E65100">80%</text>`;
-
-  // Right Y axis
-  [0,.25,.5,.75,1].forEach(t=>{
-    html+=`<text x="${cW+2}" y="${cH-t*cH+4}" font-size="9" fill="#888">${(t*100).toFixed(0)}%</text>`;
-  });
-  html+=`<line x1="0" y1="0" x2="0" y2="${cH}" stroke="#CCC"/><line x1="0" y1="${cH}" x2="${cW}" y2="${cH}" stroke="#CCC"/>`;
-  html+=`</g></svg>`;
-  svg.outerHTML=html;
+  // Footer totals row
+  rows += `<tr style="background:#F1F5F9;font-weight:700;border-top:2px solid #94A3B8">
+    <td></td>
+    <td style="color:#334155">${data.length} suppliers</td>
+    <td style="font-size:14px;color:#0F172A">${fmt$(totalSpend)}</td>
+    <td style="color:#334155;font-size:12px">100%</td>
+    <td colspan="3" style="color:#64748B;font-size:11px">Program Total</td>
+  </tr>`;
+  document.getElementById('tbl-spend-body').innerHTML = rows;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
