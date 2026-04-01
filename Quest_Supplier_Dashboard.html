@@ -980,7 +980,7 @@ function buildSpendOverviewTable(){
         </div>
       </td>
       <td>$${fmtN(s.avgBr)}</td>
-      <td style="white-space:nowrap">$${fmtN(s.avgMu)}${s.avgMuPct!=null ? ` <span style="font-size:11px;color:#64748B;font-weight:500">(${s.avgMuPct.toFixed(1)}%)</span>` : ''}</td>
+      <td style="white-space:nowrap">${s.avgMuPct!=null ? `${s.avgMuPct.toFixed(1)}%` : '—'}${s.avgMu ? ` <span style="font-size:11px;color:#64748B;font-weight:500">($${fmtN(s.avgMu)})</span>` : ''}</td>
       <td>${s.pctNotMeeting!=null ? `<span class="pill ${nmClass}">${fmtPct(s.pctNotMeeting)}</span>` : '—'}</td>
     </tr>`;
   });
