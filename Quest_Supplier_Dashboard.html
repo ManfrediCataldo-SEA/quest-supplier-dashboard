@@ -1169,18 +1169,35 @@ function buildMuRegionTable(){
 
   data.forEach((s,si)=>{
     const cells = muMatrix[s.name] || {};
-    const validPcts = cols.map(c=>cells[c]).filter(c=>c?.muPct!=null&&c.muPct>0).map(c=>c.muPct);
+    let validPcts;
+    if(colMode === 'title'){
+      // Use SUP_TITLE_MATRIX directly for reliable MU% lookup
+      const supData = SUP_TITLE_MATRIX[s.name] || {};
+      validPcts = TOP7_TITLES.map(t=>supData[t]).filter(c=>c && c.muPct != null && c.muPct > 0).map(c=>c.muPct);
+    } else {
+      validPcts = cols.map(c=>cells[c]).filter(c=>c?.muPct!=null&&c.muPct>0).map(c=>c.muPct);
+    }
     const minPct = validPcts.length ? Math.min(...validPcts) : null;
     const maxPct = validPcts.length ? Math.max(...validPcts) : null;
     const delta  = (minPct!==null && maxPct!==null && validPcts.length>1) ? (maxPct-minPct) : null;
 
     let savings = 0;
     if(minPct !== null){
-      cols.forEach(col=>{
-        const c = cells[col];
-        if(!c||!c.muPct||c.muPct<=0||c.spend<=0) return;
-        savings += c.spend * (c.muPct - minPct) / (100 + c.muPct);
-      });
+      if(colMode === 'title'){
+        // Compute directly from SUP_TITLE_MATRIX to avoid any muMatrix lookup issue
+        const supData = SUP_TITLE_MATRIX[s.name] || {};
+        TOP7_TITLES.forEach(title=>{
+          const cell = supData[title];
+          if(!cell || cell.muPct == null || cell.muPct <= 0 || cell.spend <= 0) return;
+          savings += cell.spend * (cell.muPct - minPct) / (100 + cell.muPct);
+        });
+      } else {
+        cols.forEach(col=>{
+          const c = cells[col];
+          if(!c || c.muPct == null || c.muPct <= 0 || c.spend <= 0) return;
+          savings += c.spend * (c.muPct - minPct) / (100 + c.muPct);
+        });
+      }
     }
     totalSavings  += savings;
     totalSpendAll += s.totalSpend;
@@ -1217,13 +1234,21 @@ function buildMuRegionTable(){
       row += `<td style="padding:6px 10px;text-align:center;border-left:2px solid #FCA5A5;background:#FFF7ED;color:#CBD5E1">—</td>`;
     }
 
-    // threshold: $500 for regions (large variation expected), $1 for titles (smaller variation)
-    const savingsThreshold = colMode === 'region' ? 500 : 1;
-    if(savings > savingsThreshold){
-      const sBg = savings>100000?'rgba(21,128,61,.15)':savings>20000?'rgba(22,163,74,.1)':'rgba(134,239,172,.2)';
-      row += `<td style="padding:6px 10px;text-align:right;font-weight:700;white-space:nowrap;border-left:2px solid #6EE7B7;background:${sBg};color:#166534">${fmt$(savings)}</td>`;
+    if(colMode === 'title'){
+      // In title mode: always show if savings > 0, no threshold
+      if(savings > 0){
+        const sBg = savings>100000?'rgba(21,128,61,.15)':savings>20000?'rgba(22,163,74,.1)':'rgba(134,239,172,.2)';
+        row += `<td style="padding:6px 10px;text-align:right;font-weight:700;white-space:nowrap;border-left:2px solid #6EE7B7;background:${sBg};color:#166534">${fmt$(savings)}</td>`;
+      } else {
+        row += `<td style="padding:6px 10px;text-align:right;white-space:nowrap;border-left:2px solid #6EE7B7;background:#F0FDF4;color:#94A3B8">—</td>`;
+      }
     } else {
-      row += `<td style="padding:6px 10px;text-align:right;white-space:nowrap;border-left:2px solid #6EE7B7;background:#F0FDF4;color:#94A3B8">${savings>0?fmt$(savings):'—'}</td>`;
+      if(savings > 500){
+        const sBg = savings>100000?'rgba(21,128,61,.15)':savings>20000?'rgba(22,163,74,.1)':'rgba(134,239,172,.2)';
+        row += `<td style="padding:6px 10px;text-align:right;font-weight:700;white-space:nowrap;border-left:2px solid #6EE7B7;background:${sBg};color:#166534">${fmt$(savings)}</td>`;
+      } else {
+        row += `<td style="padding:6px 10px;text-align:right;white-space:nowrap;border-left:2px solid #6EE7B7;background:#F0FDF4;color:#94A3B8">${savings>0?fmt$(savings):'—'}</td>`;
+      }
     }
     row += '</tr>';
     bodyHtml += row;
