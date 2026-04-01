@@ -1070,10 +1070,9 @@ function buildMuRegionTable(){
     return;
   }
 
-  // Collect all regions (sorted)
-  const regSet = new Set();
-  data.forEach(s=>Object.keys(s.regions).forEach(r=>regSet.add(r)));
-  const regions = [...regSet].sort();
+  // Only show the 6 key regions (in a fixed, logical order)
+  const KEY_REGIONS = ['East','Great Midwest','North','SouthEast','SouthWest','West'];
+  const regions = KEY_REGIONS;
 
   // Per-supplier × region stats
   // muPct = mu / payRate (fraction → stored as %)
