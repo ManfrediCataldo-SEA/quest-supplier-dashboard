@@ -243,12 +243,13 @@
     <div class="tbl-wrap"><table id="tbl-competitiveness">
       <thead><tr>
         <th onclick="sortTable('tbl-competitiveness',0)">Supplier ↕</th>
-        <th onclick="sortTable('tbl-competitiveness',1)">Avg MU ($) ↕</th>
-        <th onclick="sortTable('tbl-competitiveness',2)">Avg Pay Rate ↕</th>
-        <th onclick="sortTable('tbl-competitiveness',3)">Avg Bill Rate ↕</th>
-        <th onclick="sortTable('tbl-competitiveness',4)">Total Spend ↕</th>
-        <th onclick="sortTable('tbl-competitiveness',5)">Regions Active</th>
-        <th onclick="sortTable('tbl-competitiveness',6)">MU Tier</th>
+        <th onclick="sortTable('tbl-competitiveness',1)">Avg MU (%) ↕</th>
+        <th onclick="sortTable('tbl-competitiveness',2)">Avg MU ($) ↕</th>
+        <th onclick="sortTable('tbl-competitiveness',3)">Avg Pay Rate ↕</th>
+        <th onclick="sortTable('tbl-competitiveness',4)">Avg Bill Rate ↕</th>
+        <th onclick="sortTable('tbl-competitiveness',5)">Total Spend ↕</th>
+        <th onclick="sortTable('tbl-competitiveness',6)">Regions Active</th>
+        <th onclick="sortTable('tbl-competitiveness',7)">MU Tier</th>
       </tr></thead>
       <tbody id="tbl-comp-body"></tbody>
     </table></div>
@@ -1004,14 +1005,19 @@ function buildCompTable(){
   const data = filteredData().filter(s=>s.totalSpend>0);
   let rows = '';
   data.forEach(s=>{
-    let mu = s.avgMu, pr = s.avgPr, br = s.avgBr;
+    let mu = s.avgMu, pr = s.avgPr, br = s.avgBr, muPct = s.avgMuPct;
     if(f.region !== 'All' && s.regions[f.region]){
       const rd = s.regions[f.region];
       mu = rd.mu; pr = rd.payRate; br = rd.billRate;
+      // recompute muPct from YTD for this region
+      const yRows = YTD.filter(d=>d.s===s.name && d.r===f.region && (f.rolecat==='All'||d.rc===f.rolecat));
+      const mps = yRows.filter(d=>d.muPct!=null&&d.muPct>0);
+      muPct = mps.length ? Math.round(mps.reduce((a,d)=>a+d.muPct*d.n,0)/mps.reduce((a,d)=>a+d.n,0)*1000)/10 : null;
     }
     rows += `<tr>
       <td>${s.name}</td>
-      <td><strong>${fmtN(mu)}</strong></td>
+      <td><strong>${muPct!=null ? muPct.toFixed(1)+'%' : '—'}</strong></td>
+      <td>${fmtN(mu)}</td>
       <td>${fmtN(pr)}</td>
       <td>${fmtN(br)}</td>
       <td>${fmt$(s.totalSpend)}</td>
