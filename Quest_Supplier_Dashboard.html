@@ -1235,12 +1235,13 @@ function buildMuRegionTable(){
     }
 
     if(colMode === 'title'){
-      // In title mode: always show if savings > 0, no threshold
+      // Debug: always show raw value so we can confirm computation
+      const savDbg = (typeof savings === 'number' && !isNaN(savings)) ? Math.round(savings) : 'ERR';
       if(savings > 0){
         const sBg = savings>100000?'rgba(21,128,61,.15)':savings>20000?'rgba(22,163,74,.1)':'rgba(134,239,172,.2)';
-        row += `<td style="padding:6px 10px;text-align:right;font-weight:700;white-space:nowrap;border-left:2px solid #6EE7B7;background:${sBg};color:#166534">${fmt$(savings)}</td>`;
+        row += `<td style="padding:6px 10px;text-align:right;font-weight:700;white-space:nowrap;border-left:2px solid #6EE7B7;background:${sBg};color:#166534">$${savDbg.toLocaleString()}</td>`;
       } else {
-        row += `<td style="padding:6px 10px;text-align:right;white-space:nowrap;border-left:2px solid #6EE7B7;background:#F0FDF4;color:#94A3B8">—</td>`;
+        row += `<td style="padding:6px 10px;text-align:right;white-space:nowrap;border-left:2px solid #6EE7B7;background:#F0FDF4;color:#94A3B8">${savDbg===0?'—':savDbg}</td>`;
       }
     } else {
       if(savings > 500){
